@@ -1,0 +1,17 @@
+# Visual Studio
+.vs/
+
+# .NET
+bin/
+obj/
+
+# Node (if React is inside same repo)
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+
+# Env
+.env
