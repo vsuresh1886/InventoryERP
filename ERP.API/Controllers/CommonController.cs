@@ -313,6 +313,89 @@ namespace ERP.API.Controllers
         }
         #endregion
 
+        #region "quotation"
+        [HttpGet("getCustomer")]
+        public async Task<IActionResult> getCustomer()
+        {
+            try
+            {
+                var result = await _commonService.FetchCustomer();
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "Customer  Fetched Successfully", data = result });
+                }
+                else
+                {
+                    return Unauthorized(new ApiResponse<object>(
+                                 false,
+                                 "Invalid  configuration",
+                                 null
+                            ));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("User error: " + ex.Message);
+                return StatusCode(500, new { success = false, message = "Internal server error", error = ex.Message });
+
+            }
+        }
+
+        [HttpGet("getSalesperson")]
+        public async Task<IActionResult> getSalesperson()
+        {
+            try
+            {
+                var result = await _commonService.FetchSalesperson();
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "Customer  Fetched Successfully", data = result });
+                }
+                else
+                {
+                    return Unauthorized(new ApiResponse<object>(
+                                 false,
+                                 "Invalid  configuration",
+                                 null
+                            ));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("User error: " + ex.Message);
+                return StatusCode(500, new { success = false, message = "Internal server error", error = ex.Message });
+
+            }
+        }
+
+
+        [HttpGet("getItems")]
+        public async Task<IActionResult> getItems()
+        {
+            try
+            {
+                var result = await _commonService.FetchInvItems();
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "Customer  Fetched Successfully", data = result });
+                }
+                else
+                {
+                    return Unauthorized(new ApiResponse<object>(
+                                 false,
+                                 "Invalid  configuration",
+                                 null
+                            ));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("User error: " + ex.Message);
+                return StatusCode(500, new { success = false, message = "Internal server error", error = ex.Message });
+
+            }
+        }
+        #endregion
 
 
     }

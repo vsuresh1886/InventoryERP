@@ -18,6 +18,10 @@ namespace ERP.Application.Interfaces.Repositories
         public Task<List<DropdownDto>> FetchUnits();
         public Task<List<DropdownDto>> FetchSupplier();
         public Task<List<DropdownDto>> FetchSubcategory();
+        public Task<List<DropdownDto>> FetchCustomer();
+        public Task<List<DropdownDto>> FetchSalesperson();
+        public Task<List<DropdownItemsDto>> FetchInvItems();
+
 
     }
 }

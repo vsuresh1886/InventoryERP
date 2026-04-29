@@ -40,9 +40,14 @@ namespace ERP.Infrastructure.Repositories
 
                 if (!string.IsNullOrEmpty(filters.Search))
                 {
+                    var search = filters.Search.Trim();
+
                     query = query.Where(x =>
-                        x.itemname.Contains(filters.Search) ||
-                        x.sku.Contains(filters.Search));
+                        EF.Functions.ILike(x.itemname, $"%{search}%") ||
+                        EF.Functions.ILike(x.category, $"%{search}%") ||
+                        EF.Functions.ILike(x.domain, $"%{search}%") ||
+                        EF.Functions.ILike(x.sku, $"%{search}%")
+                    );
                 }
 
                 if(!string.IsNullOrEmpty(filters.sku))
@@ -54,10 +59,16 @@ namespace ERP.Infrastructure.Repositories
                     query = query.Where(x => x.itemname.Contains(filters.itemName));
                 }
 
-                if (!string.IsNullOrEmpty(filters.category))
+                if (filters.category != null && filters.category.Any())
                 {
-                    query = query.Where(x => x.category == filters.category);
+                    query = query.Where(x => filters.category.Contains(x.category_id));
                 }
+
+                if (filters.domain != null && filters.domain.Any())
+                {
+                    query = query.Where(x => filters.domain.Contains(x.domain_id));
+                }
+                
 
                 if (filters.lowStock == true)
                 {
@@ -71,9 +82,10 @@ namespace ERP.Infrastructure.Repositories
                             .OrderBy(x => x.itemname) // IMPORTANT: Always order before Skip
                             .Skip(offset)
                             .Take(limit).ToListAsync();
-                 var res = data.Select(x => new InventoryGridDto
+                 var res = data.Select((x,index) => new InventoryGridDto
                             {
-                                Id = x.id.ToString(),
+                                 Sno = offset + index + 1,
+                                 Id = x.id.ToString(),
                                 Sku = x.sku,
                                 part_number = x.partnumber,
                                 item_name = x.itemname,

@@ -1,6 +1,7 @@
 ﻿using ERP.Domain.Entities;
 using ERP.Domain.Entities.CodeGenerators;
 using ERP.Domain.Entities.Inventory;
+using ERP.Domain.Entities.Quotation;
 using ERP.Domain.Entitiess;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -42,6 +43,10 @@ namespace ERP.Infrastructure.Persistence
         public DbSet<SkuSequence> SkuSequences { get; set; }
 
         public DbSet<InventoryGridView> inventoryGridViews { get; set; }
+
+        public DbSet<QuotationHeader> quotations { get; set; }
+        public DbSet<QuotationLines> quotationsLines { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<RolePermissions>()

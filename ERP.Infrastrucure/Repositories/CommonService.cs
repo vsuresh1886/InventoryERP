@@ -1,9 +1,11 @@
 ﻿using ERP.Application.DTOs;
+using ERP.Application.DTOs.Inventory;
 using ERP.Application.Interfaces.Repositories;
 using ERP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -249,5 +251,88 @@ namespace ERP.Infrastructure.Repositories
                 throw new Exception(ex.Message);
             }
         }
+        public async Task<List<DropdownDto>> FetchCustomer()
+        {
+            try
+            {
+                var result = await _context.customers.Where(x => x.partytype == 1).Select(x => new DropdownDto
+                {
+                    Id = x.cust_pk,//pk as id here
+                    Name = x.company_name
+                }).ToListAsync();
+
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<List<DropdownDto>> FetchSalesperson()
+        {
+            try
+            {
+                var result = await _context.employees.Select(x => new DropdownDto
+                {
+                    Id = x.employee_pk,//pk as id here
+                    Name = x.first_name + ' ' + x.last_name
+                }).ToListAsync();
+
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<List<DropdownItemsDto>> FetchInvItems()
+        {
+            try
+            {
+                var result = await (
+                                from i in _context.itemmasters
+
+                                join v in _context.inventoryGridViews
+                                    on i.id equals v.id into viewJoin
+                                from view in viewJoin.DefaultIfEmpty()
+
+                                join cfg in _context.iteminventoryconfigs
+                                    on i.id equals cfg.item_id into cfgJoin
+                                from config in cfgJoin.DefaultIfEmpty()
+                                join attr in _context.itemattributes.Where(x=>x.attribute_name == "part_number")
+                                    on i.id equals attr.item_id into attrJoin
+                                from attribs in attrJoin.DefaultIfEmpty()
+
+                                select new DropdownItemsDto
+                                {
+                                    id = i.id,
+                                    sku = i.sku ?? "",
+                                    name = i.name ?? "",
+
+                                    // 🔥 Add this for your Autocomplete
+                                    partNo = attribs.attribute_value ?? "",
+
+                                    // Pricing
+                                    price = view.unit_price,
+
+                                    // Optional GST (use later)
+                                    gstPct = config != null ? 0 : 0
+                                }
+                            ).ToListAsync();
+
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
+
     }
 }
