@@ -9,16 +9,18 @@ namespace ERP.Application.DTOs.Inventory
             public int Page { get; set; }
             public int Limit { get; set; }
             public string? Search { get; set; }
-            public string? category { get; set; }
+            public List<long>? category { get; set; }
             public Boolean lowStock { get; set; }
             public string? sku { get; set; }
             public string? status { get; set; }
             public string? itemName { get; set; }
+            public List<long>? domain { get; set; }
         
     }
 
     public class InventoryGridDto
     {
+        public int Sno { get; set; }
         public string Id { get; set; }
 
         public string Sku { get; set; }

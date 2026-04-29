@@ -15,8 +15,10 @@ namespace ERP.Domain.Entities.Inventory
             public long id { get; set; }
             public string? sku { get; set; }
             public string? itemname { get; set; }
+            public long category_id { get; set; }
             public string? category { get; set; }
-            public string? subcategory { get; set; }
+            public string? subcategory { get; set; } 
+           public long domain_id { get; set; }
             public string? domain { get; set; }
             public string? unit { get; set; }
             public decimal quantity { get; set; }
