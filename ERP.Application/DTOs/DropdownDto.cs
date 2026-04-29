@@ -9,4 +9,14 @@ namespace ERP.Application.DTOs
         public int Id { get; set; }
         public string? Name { get; set; }
     }
+
+    public class DropdownItemsDto
+    {
+        public long id { get; set; }
+        public string? sku { get; set; }
+        public string? partNo { get; set; }
+        public string? name { get; set; }
+        public decimal? price { get; set; }
+        public decimal gstPct { get; set; }
+    }
 }
