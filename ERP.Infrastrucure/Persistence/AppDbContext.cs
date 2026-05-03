@@ -2,6 +2,7 @@
 using ERP.Domain.Entities.CodeGenerators;
 using ERP.Domain.Entities.Inventory;
 using ERP.Domain.Entities.Quotation;
+using ERP.Domain.Entities.SalesInvoice;
 using ERP.Domain.Entitiess;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -46,6 +47,9 @@ namespace ERP.Infrastructure.Persistence
 
         public DbSet<QuotationHeader> quotations { get; set; }
         public DbSet<QuotationLines> quotationsLines { get; set; }
+
+        public DbSet<InvoiceHeader> invoiceHeaders { get; set; }
+        public DbSet<InvoiceLines> invoicelines { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -1,5 +1,6 @@
 ﻿using ERP.Application.DTOs.Inventory;
 using ERP.Application.DTOs.Quotation;
+using ERP.Application.DTOs.SalesInvoice;
 using ERP.Application.Interfaces.Repositories;
 using ERP.Application.Models;
 using ERP.Infrastructure.Repositories;
@@ -8,26 +9,49 @@ using Microsoft.AspNetCore.Mvc;
 namespace ERP.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
-    public class QuotationController : Controller
+    [Route("api/{controller}")]
+    public class SalesController : ControllerBase
     {
-        public readonly IQuotationService _quotationService;
-        public readonly IPdfService _pdfservice;
-        
-        public QuotationController(IQuotationService quotationService,IPdfService pedfservice)
+        public readonly ISalesService _salesService;
+
+        public SalesController(ISalesService salesService)
         {
-            _quotationService = quotationService;
-            _pdfservice = pedfservice;
+            _salesService = salesService;
         }
 
-
-
-        [HttpGet("getQuotationids")]
-        public async Task<IActionResult> getQuotationids()
+        [HttpGet("getInvoiceids")]
+        public async Task<IActionResult> getInvoiceids()
         {
             try
             {
-                var result = await _quotationService.Fetchquotationid();
+                var result = await _salesService.FetchInvoiceids();
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "Sales/Invoice Id's  Fetched Successfully", data = result });
+                }
+                else
+                {
+                    return Unauthorized(new ApiResponse<object>(
+                                 false,
+                                 "Invalid  configuration",
+                                 null
+                            ));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("User error: " + ex.Message);
+                return StatusCode(500, new { success = false, message = "Internal server error", error = ex.Message });
+
+            }
+        }
+
+        [HttpGet("getInvoices")]
+        public async Task<IActionResult> getInvoices([FromQuery] InvoiceGridRequestDto invdto)
+        {
+            try
+            {
+                var result = await _salesService.FetchInvoices(invdto);
                 if (result != null)
                 {
                     return Ok(new { success = true, message = "Quotation Id's  Fetched Successfully", data = result });
@@ -49,40 +73,10 @@ namespace ERP.API.Controllers
             }
         }
 
-        [HttpGet("getQuotations")]
-        public async Task<IActionResult> getQuotations([FromQuery] QuotationGridRequestDto quotationdto)
+        [HttpGet("getInvoiceById")]
+        public async Task<IActionResult> getInvoiceById([FromQuery] long id)
         {
-            try
-            {
-                var result = await _quotationService.Fetchquotations(quotationdto);
-                if (result != null)
-                {
-                    return Ok(new { success = true, message = "Quotation Id's  Fetched Successfully", data = result });
-                }
-                else
-                {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("User error: " + ex.Message);
-                return StatusCode(500, new { success = false, message = "Internal server error", error = ex.Message });
-
-            }
-        }
-
-
-
-
-        [HttpPost("CreateUpdateQuot")]
-        public async Task<IActionResult> CreateUpdateQuot(QuotationDto QuotationItem)
-        {
-            var result = await _quotationService.CreateUpdateQuot(QuotationItem);
+            var result = await _salesService.getInvoiceById(id);
             if (result != null)
             {
                 return Ok(result);
@@ -93,10 +87,10 @@ namespace ERP.API.Controllers
             }
         }
 
-        [HttpGet("getQuotationById")]
-        public async Task<IActionResult> getQuotationById([FromQuery] string id)
+        [HttpPost("CreateUpdateInvoice")]
+        public async Task<IActionResult> CreateUpdateInvoice(InvoiceDto InvoiceItem)
         {
-            var result = await _quotationService.getQuotationbyid(id);
+            var result = await _salesService.CreateUpdateInvoice(InvoiceItem);
             if (result != null)
             {
                 return Ok(result);
@@ -106,14 +100,5 @@ namespace ERP.API.Controllers
                 return BadRequest("Bad Request");
             }
         }
-
-        [HttpGet("{id}/pdf")]
-        public async Task<IActionResult> getPdf(int id)
-        {
-            var model = await _quotationService.quotationpdfdata(id);
-            var pdf =  _pdfservice.GenerateQuotationPdf(model);
-            return File(pdf, "application/pdf", $"Quotation1.pdf");
-        }
-       
     }
 }

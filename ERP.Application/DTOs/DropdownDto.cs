@@ -18,5 +18,6 @@ namespace ERP.Application.DTOs
         public string? name { get; set; }
         public decimal? price { get; set; }
         public decimal gstPct { get; set; }
+        public decimal availableStock { get; set; }
     }
 }

@@ -38,6 +38,7 @@ namespace ERP.Application.DTOs.Inventory
         public string? domain { get; set; }
 
         public decimal quantity { get; set; }
+        public decimal? min_stock { get; set; }
 
         public decimal? max_stock { get; set; }
 
