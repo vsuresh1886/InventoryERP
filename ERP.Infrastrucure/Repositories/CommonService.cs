@@ -320,7 +320,8 @@ namespace ERP.Infrastructure.Repositories
                                     price = view.unit_price,
 
                                     // Optional GST (use later)
-                                    gstPct = config != null ? 0 : 0
+                                    gstPct = config != null ? 0 : 0,
+                                    availableStock = view.quantity
                                 }
                             ).ToListAsync();
 

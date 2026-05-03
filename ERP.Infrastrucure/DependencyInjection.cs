@@ -55,6 +55,8 @@ namespace ERP.Infrastrucure
             services.AddScoped<IInventoryService, InventoryService>();
             services.AddScoped<ICurrentUser, CurrentUser>();
             services.AddScoped<IQuotationService, QuotationService>();
+            services.AddScoped<IPdfService, PdfService>();
+            services.AddScoped<ISalesService, SalesService>();
             // Register Services End
 
             return services;

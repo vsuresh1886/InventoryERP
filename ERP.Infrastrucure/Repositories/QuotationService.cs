@@ -1,9 +1,11 @@
 ﻿using ERP.Application.DTOs;
 using ERP.Application.DTOs.Inventory;
 using ERP.Application.DTOs.Quotation;
+using ERP.Application.DTOs.SalesInvoice;
 using ERP.Application.Interfaces.Repositories;
 using ERP.Application.Interfaces.Repositories.CodeGenerator;
 using ERP.Application.Interfaces.Repositories.Common;
+using ERP.Application.Models.Quotation;
 using ERP.Domain.Entities.Quotation;
 using ERP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +13,9 @@ using OpenTelemetry.Trace;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Security.Cryptography;
 using System.Text;
+using System.Globalization;
 
 namespace ERP.Infrastructure.Repositories
 {
@@ -130,6 +134,23 @@ namespace ERP.Infrastructure.Repositories
                 if (filters.salesperson != null && filters.salesperson.Any())
                 {
                     query = query.Where(x => filters.salesperson.Contains(x.q.salesperson));
+                }
+
+                if(!String.IsNullOrWhiteSpace(filters.datefrom) ) 
+                {
+                    var datefrm = DateTimeOffset.Parse(filters.datefrom).UtcDateTime;
+
+                    DateTime dateto;
+
+                    if (!string.IsNullOrWhiteSpace(filters.dateto))
+                    {
+                        dateto = DateTimeOffset.Parse(filters.dateto).UtcDateTime;
+                    }
+                    else
+                    {
+                        dateto = datefrm;
+                    }
+                    query = query.Where(x => x.q.quotation_date >= datefrm && x.q.quotation_date <= dateto);
                 }
 
                 var total = await query.CountAsync();
@@ -328,6 +349,50 @@ namespace ERP.Infrastructure.Repositories
             {
                 await transaction.RollbackAsync();
                 Console.WriteLine("Creat Update quotation error: " + ex.Message);
+                throw ex;
+            }
+        }
+
+        public async Task<QuotationModel> quotationpdfdata(int id)
+        {
+            try
+            {
+                var result = await _context.quotations.AsNoTracking().Where(x => x.id == id).
+                    Select(y => new QuotationModel
+                    {
+                        companyname =" Test Data Company",
+                        companyaddress = "Devarchikanahalli, bangalore - 560076",
+                        gstin = "",
+                        quotationno = y.quotation_no,
+                        quotationdate = y.quotation_date,
+                        validity = y.validity.ToString(),
+                        customername = _context.customers.Where(x => x.cust_pk == Convert.ToInt32(value: y.party_id)).Select(z=>z.company_name).FirstOrDefault(),
+                        customeraddress = _context.customers.Where(x => x.cust_pk == Convert.ToInt32(value: y.party_id)).Select(z => z.address_line1 + ", " + z.city + ", " + z.state + ", " + z.country).FirstOrDefault(),
+                        contactperson ="Muthu Pandi",
+                        contact = "+91 9150770932",
+                        subtotal = y.sub_total,
+                        total = y.total_amount,
+                        discount = y.discount_amount,
+                        gst = y.tax_amount,
+                        amtinwords = "two thousand",
+                        items = _context.quotationsLines.Where(z => z.quotation_id == y.id ).Select(litem => new QuotationItems
+                        {
+                            
+                            partno = _context.itemattributes.Where(t=>t.attribute_name == "part_number" && t.item_id == litem.item_id).Select(v=>v.attribute_value).FirstOrDefault(),
+                            partname = _context.itemmasters.Where(t=>t.id == litem.item_id).Select(v=>v.name).FirstOrDefault(),
+                            quantity = (int)litem.quantity,
+                            unitprice = litem.unit_price,
+                            //VatPct = litem.tax,
+                            totalprice = litem.line_total,
+
+                        }).ToList()
+                    }).FirstOrDefaultAsync();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Fetch quotation by id  error: " + ex.Message);
                 throw ex;
             }
         }

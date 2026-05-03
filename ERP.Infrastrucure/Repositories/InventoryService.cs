@@ -99,6 +99,7 @@ namespace ERP.Infrastructure.Repositories
                                 domain = x.domain,
 
                                 quantity = x.quantity,
+                                min_stock = x.minstock,
                                 max_stock = x.maxstock,
                                 unit = x.unit,
                                 unit_price = x.unit_price, // extend later
