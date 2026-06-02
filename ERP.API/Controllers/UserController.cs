@@ -33,11 +33,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid Data"));
                 }
             }
             catch(Exception ex)
@@ -58,7 +54,7 @@ namespace ERP.API.Controllers
             }
             else
             {
-                return Ok(new ApiResponse<object>(false, "Invalid User", null));
+                return Unauthorized(ApiResponseHelper.Fail<object>("Invalid User"));
             }
         }
 
@@ -72,7 +68,7 @@ namespace ERP.API.Controllers
             }
             else
             {
-                return Ok(new ApiResponse<object>(false, "Something Went Wrong", null));
+                return Unauthorized(ApiResponseHelper.Fail<object>("Somnething went wrong"));
             }
         }
         

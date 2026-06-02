@@ -28,5 +28,8 @@ namespace ERP.Domain.Entities.SalesInvoice
             public int created_by { get; set; }
             public DateTime updated_at { get; set; }
             public int updated_by { get; set; }
+            public decimal  balance_amount { get; set; }
+            public decimal paid_amount { get; set; }
+            public int payment_status { get; set; }
         }
 }

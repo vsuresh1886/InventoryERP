@@ -34,11 +34,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Quutation"));
                 }
             }
             catch (Exception ex)
@@ -61,11 +57,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Quotation"));
                 }
             }
             catch (Exception ex)

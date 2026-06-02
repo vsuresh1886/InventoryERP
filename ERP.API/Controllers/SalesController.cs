@@ -31,11 +31,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized();
                 }
             }
             catch (Exception ex)
@@ -58,11 +54,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized();
                 }
             }
             catch (Exception ex)

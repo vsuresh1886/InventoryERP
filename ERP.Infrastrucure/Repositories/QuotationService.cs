@@ -164,7 +164,7 @@ namespace ERP.Infrastructure.Repositories
                     sno = offset + index + 1,
                     id = x.q.id,
                     quono = x.q.quotation_no,
-                    customerid = x.p.customer_name,
+                    customerid = x.p.company_name,
                     salesperson = x.e.first_name + ' ' + x.e.last_name,
                     validfrom = x.q.quotation_date,
                     validto = x.q.quotation_date.AddDays(x.q.validity),
