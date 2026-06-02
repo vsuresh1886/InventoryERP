@@ -1,4 +1,5 @@
 ﻿using ERP.Domain.Entities;
+using ERP.Domain.Entities.Accounts;
 using ERP.Domain.Entities.CodeGenerators;
 using ERP.Domain.Entities.Inventory;
 using ERP.Domain.Entities.Quotation;
@@ -27,6 +28,7 @@ namespace ERP.Infrastructure.Persistence
         public DbSet<department_master> department_Masters { get; set; }
         public DbSet<grid_configuration_mst> grid_Configuration_Msts { get; set; }
         public DbSet<country_master> countrymasters { get; set; }
+        public DbSet<masterddlookup> ddlookups { get; set; }
         public DbSet<code_protocol_master> CodeProtocolMaster { get; set; }
         public DbSet<code_sequence_tracker> CodeSequenceTracker { get; set; }
         public DbSet<customer_master> customers { get; set; }
@@ -50,6 +52,9 @@ namespace ERP.Infrastructure.Persistence
 
         public DbSet<InvoiceHeader> invoiceHeaders { get; set; }
         public DbSet<InvoiceLines> invoicelines { get; set; }
+
+        public DbSet<Collectionheader> collectionheaders { get; set; }
+        public DbSet<Collectiondetail> collectiondetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

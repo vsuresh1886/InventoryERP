@@ -1,11 +1,12 @@
+using ERP.Application.Models;
 using ERP.Infrastructure.Persistence;
+using ERP.Infrastructure.Repositories;
 using ERP.Infrastrucure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using ERP.Application.Models;
-using System.Text;
 using QuestPDF.Infrastructure;
+using System.Text;
 
 
 
@@ -58,7 +59,7 @@ builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 QuestPDF.Settings.License = LicenseType.Community;
-
+builder.Services.AddHttpClient<AiService>();
 var app = builder.Build();
 
 // 2. Enable CORS before MapControllers

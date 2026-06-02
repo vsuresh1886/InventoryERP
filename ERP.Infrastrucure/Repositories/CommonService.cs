@@ -109,6 +109,23 @@ namespace ERP.Infrastructure.Repositories
                 throw new Exception(ex.Message);
             }
         }
+        public async Task<List<DropdownDto>> FetchStatuses(int form_id, string type)
+        {
+            try
+            {
+                var result = await _context.ddlookups.Where(x=>x.lookup_type == type).Select( item => new DropdownDto
+                                {
+                                    Id = (int)item.id,
+                                    Name = item.value,
+                                }).ToListAsync();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
 
         public async Task<List<DropdownDto>> FetchCountry()
         {

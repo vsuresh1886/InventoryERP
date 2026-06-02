@@ -31,11 +31,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception  ex)
@@ -57,11 +53,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -83,11 +75,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>( "Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -109,11 +97,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -123,6 +107,29 @@ namespace ERP.API.Controllers
 
             }
         }
+        [HttpGet("getStatuses")]
+        public async Task<IActionResult> getStatuses(int form_id, string type)
+        {
+            try
+            {
+                var result = await _commonService.FetchStatuses(form_id, type);
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "Status Fetched Successfully", data = result });
+                }
+                else
+                {
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("User error: " + ex.Message);
+                return StatusCode(500, new { success = false, message = "Internal server error", error = ex.Message });
+
+            }
+        }
+
         [HttpGet("getCountries")]
         public async Task<IActionResult> getCountries()
         {
@@ -135,11 +142,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -162,11 +165,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -190,11 +189,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -217,11 +212,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -244,11 +235,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -271,11 +258,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -297,11 +280,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -326,11 +305,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -353,11 +328,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -381,11 +352,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)

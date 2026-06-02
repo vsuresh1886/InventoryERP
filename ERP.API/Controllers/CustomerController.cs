@@ -31,11 +31,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid Grid configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
                 }
             }
             catch (Exception ex)
@@ -56,11 +52,7 @@ namespace ERP.API.Controllers
             }
             else
             {
-                return NotFound(new ApiResponse<object>(
-                                 false,
-                                 "Invalid customer",
-                                 null
-                            ));
+                return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration")); 
             }
 
         }
@@ -70,11 +62,7 @@ namespace ERP.API.Controllers
             var result = await _customerservice.CreateUpdateCustomer(customer);
             if(result != null)
                 return Ok(result);
-            return Ok(new ApiResponse<object>(
-                                 false,
-                                 "Invalid customer",
-                                 null
-                            ));
+            return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Customer"));
         }
 
     }
