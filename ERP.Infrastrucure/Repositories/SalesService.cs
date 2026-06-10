@@ -247,6 +247,7 @@ namespace ERP.Infrastructure.Repositories
                         tax_amount = InvDto.VatTotal,
                         total_amount = InvDto.GrandTotal,
                         discount_amount = InvDto.Discount,
+                        balance_amount = InvDto.GrandTotal,
                         remarks = InvDto.Remarks,
                         created_at = DateTime.UtcNow,
                         created_by = (int)_currentuser.UserId,
@@ -312,6 +313,7 @@ namespace ERP.Infrastructure.Repositories
                     Invhead.tax_amount = InvDto.VatTotal;
                     Invhead.total_amount = InvDto.GrandTotal;
                     Invhead.discount_amount = InvDto.Discount;
+                    Invhead.balance_amount = InvDto.GrandTotal;
                     Invhead.remarks = InvDto.Remarks;
                     Invhead.updated_at = DateTime.UtcNow;
                     Invhead.updated_by = (int)_currentuser.UserId;

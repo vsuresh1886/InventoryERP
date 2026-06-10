@@ -1,4 +1,5 @@
-﻿using ERP.Domain.Entities;
+﻿using ERP.Application.DTOs;
+using ERP.Domain.Entities;
 using ERP.Domain.Entities.Accounts;
 using ERP.Domain.Entities.CodeGenerators;
 using ERP.Domain.Entities.Inventory;
@@ -55,6 +56,9 @@ namespace ERP.Infrastructure.Persistence
 
         public DbSet<Collectionheader> collectionheaders { get; set; }
         public DbSet<Collectiondetail> collectiondetails { get; set; }
+        public DbSet<CustomerSOARowDto> CustomerSOARowDtos { get; set; }
+        public DbSet<CustomerAgingRowDto> CustomerAgingRowDtos { get; set; }
+        public DbSet<MessageSetting> MessageSettings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -70,6 +74,8 @@ namespace ERP.Infrastructure.Persistence
                 .WithMany(p => p.MenuPermissions)
                 .HasForeignKey(mp => mp.permissionid);
             modelBuilder.Entity<InventoryGridView>().HasNoKey().ToView("inventory_grid_view");
+            modelBuilder.Entity<CustomerSOARowDto>(entity=> { entity.HasNoKey(); entity.ToView(null); });
+            modelBuilder.Entity<CustomerAgingRowDto>(entity => { entity.HasNoKey(); entity.ToView(null); });
         }
     }
 }
