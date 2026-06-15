@@ -390,11 +390,6 @@ namespace ERP.Infrastructure.Repositories
                     await _context.SaveChangesAsync();
                 }  // call the transaction function to update the stock. 
                 
-
-
-
-
-
                     await transaction.CommitAsync();
 
                 return InvDto;

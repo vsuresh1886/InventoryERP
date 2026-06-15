@@ -18,7 +18,7 @@ namespace ERP.Application.DTOs
 
         public string customer_name { get; set; } = string.Empty;
 
-        public long invoice_id { get; set; }
+        public long invoice_ids { get; set; }
 
         public string invoice_no { get; set; } = string.Empty;
 
@@ -43,7 +43,7 @@ namespace ERP.Application.DTOs
 
     public class CustomerAgingInvoiceDto
     {
-        public long invoice_id { get; set; }
+        public long invoice_ids { get; set; }
 
         public string invoice_no { get; set; } = string.Empty;
 

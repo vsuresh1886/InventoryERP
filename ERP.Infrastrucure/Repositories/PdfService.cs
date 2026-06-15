@@ -1,4 +1,5 @@
 ﻿using ERP.Application.DTOs;
+using ERP.Application.DTOs.Accounts;
 using ERP.Application.Interfaces.Repositories;
 using ERP.Application.Models.Quotation;
 using ERP.Infrastructure.Document;
@@ -580,8 +581,277 @@ namespace ERP.Infrastructure.Repositories
             return document.GeneratePdf();
         }
 
-       
 
+        public async Task<byte[]> Gen_customerOSPdf(List<CustomerOutstandingDto> customers)
+        {
+            var document =
+                QuestPDF.Fluent.Document.Create(
+                    container =>
+                    {
+                        container.Page(page =>
+                        {
+                            page.Size(
+                                QuestPDF.Helpers.PageSizes.A4
+                            );
+
+                            page.Margin(20);
+
+                            page.DefaultTextStyle(x =>
+                                x.FontSize(9)
+                            );
+
+                            // ============================================
+                            // HEADER
+                            // ============================================
+
+                            page.Header().Column(col =>
+                            {
+                                col.Item().Text(
+                                    "CUSTOMER OUTSTANDING REPORT"
+                                )
+                                .Bold()
+                                .FontSize(18)
+                                .AlignCenter();
+
+                                col.Item()
+                                    .PaddingTop(5);
+                            });
+
+                            // ============================================
+                            // CONTENT
+                            // ============================================
+
+                            page.Content().Column(column =>
+                            {
+                                foreach (
+                                    var customer
+                                    in customers
+                                )
+                                {
+                                    // ====================================
+                                    // CUSTOMER HEADER
+                                    // ====================================
+
+                                    column.Item()
+                                        .Background(
+                                            QuestPDF.Helpers
+                                            .Colors.Blue.Darken2
+                                        )
+                                        .Padding(5)
+                                        .Text(
+                                            $"Customer : {customer.customer_name}"
+                                        )
+                                        .FontColor(
+                                            QuestPDF.Helpers
+                                            .Colors.White
+                                        )
+                                        .Bold();
+
+                                    // ====================================
+                                    // CUSTOMER SUMMARY
+                                    // ====================================
+
+                                    column.Item()
+                                        .PaddingVertical(5)
+                                        .Text(
+
+                                            $"Invoice Amount : {customer.totalInvoiceAmount:N2}    " +
+
+                                            $"Received : {customer.totalReceivedAmount:N2}    " +
+
+                                            $"Returned : {customer.totalReturnedAmount:N2}    " +
+
+                                            $"Pending : {customer.totalPendingAmount:N2}"
+                                        )
+                                        .Bold();
+
+                                    // ====================================
+                                    // TABLE
+                                    // ====================================
+
+                                    column.Item()
+                                        .Table(table =>
+                                        {
+                                            table.ColumnsDefinition(
+                                        columns =>
+                                        {
+                                            columns.RelativeColumn(1.5f); // Invoice
+
+                                            columns.RelativeColumn(1.3f); // Invoice Date
+
+                                            columns.RelativeColumn(1.3f); // Due Date
+
+                                            columns.RelativeColumn(0.8f); // Age
+
+                                            columns.RelativeColumn(1.2f); // Invoice Amount
+
+                                            columns.RelativeColumn(1.2f); // Received Amount
+
+                                            columns.RelativeColumn(1.2f); // Returned Amount
+
+                                            columns.RelativeColumn(1.2f); // Pending Amount
+                                        });
+
+                                            // =================================
+                                            // HEADER
+                                            // =================================
+
+                                            table.Header(header =>
+                                            {
+                                                header.Cell()
+                                            .Element(CellStyle)
+                                            .Text("Invoice")
+                                            .Bold();
+
+                                                header.Cell()
+                                            .Element(CellStyle)
+                                            .Text("Inv Date")
+                                            .Bold();
+
+                                                header.Cell()
+                                            .Element(CellStyle)
+                                            .Text("Due Date")
+                                            .Bold();
+
+                                                header.Cell()
+                                            .Element(CellStyle)
+                                            .AlignCenter()
+                                            .Text("Age")
+                                            .Bold();
+
+                                                header.Cell()
+                                            .Element(CellStyle)
+                                            .AlignRight()
+                                            .Text("Invoice Amount")
+                                            .Bold();
+
+                                                header.Cell()
+                                            .Element(CellStyle)
+                                            .AlignRight()
+                                            .Text("Received Amount")
+                                            .Bold();
+
+                                                header.Cell()
+                                          .Element(CellStyle)
+                                          .AlignRight()
+                                          .Text("Returned Amount")
+                                          .Bold();
+
+                                                header.Cell()
+                                            .Element(CellStyle)
+                                            .AlignRight()
+                                            .Text("Pending Amount")
+                                            .Bold();
+
+                                              
+                                            });
+
+                                            // =================================
+                                            // ROWS
+                                            // =================================
+
+                                            foreach (
+                                        var invoice
+                                        in customer.Invoices
+                                    )
+                                            {
+                                                table.Cell()
+                                            .Element(DataCellStyle)
+                                            .Text(
+                                                invoice.invoice_no
+                                            );
+
+                                                table.Cell()
+                                            .Element(DataCellStyle)
+                                            .Text(
+                                                invoice.invoice_date
+                                                    .ToString("dd/MM/yyyy")
+                                            );
+
+                                                table.Cell()
+                                            .Element(DataCellStyle)
+                                            .Text(
+                                                invoice.due_date
+                                                    .ToString("dd/MM/yyyy")
+                                            );
+
+                                                table.Cell()
+                                            .Element(DataCellStyle)
+                                            .AlignCenter()
+                                            .Text(
+                                                $"{invoice.age_days}"
+                                            );
+
+                                                table.Cell()
+                                            .Element(DataCellStyle)
+                                            .AlignRight()
+                                            .Text(
+                                                $"{invoice.invoice_amount:N2}"
+                                            );
+
+                                                table.Cell()
+                                            .Element(DataCellStyle)
+                                            .AlignRight()
+                                            .Text(
+                                                $"{invoice.received_amount:N2}"
+                                            );
+                                                table.Cell()
+                                            .Element(DataCellStyle)
+                                            .AlignRight()
+                                            .Text(
+                                                $"{invoice.returned_amount:N2}"
+                                            );
+
+
+                                                table.Cell()
+                                            .Element(DataCellStyle)
+                                            .AlignRight()
+                                            .Text(
+                                                $"{invoice.pending_amount:N2}"
+                                            );
+
+                                            }
+                                        });
+
+                                    // ====================================
+                                    // CUSTOMER TOTAL
+                                    // ====================================
+
+                                    column.Item()
+                                        .AlignRight()
+                                        .PaddingTop(5)
+                                        .Text(
+                                            $"Customer Outstanding : {customer.totalPendingAmount:N2}"
+                                        )
+                                        .Bold()
+                                        .FontSize(11);
+
+                                    column.Item()
+                                        .PaddingBottom(20);
+                                }
+                            });
+
+                            // ============================================
+                            // FOOTER
+                            // ============================================
+
+                            page.Footer()
+                                .AlignCenter()
+                                .Text(x =>
+                                {
+                                    x.Span("Page ");
+
+                                    x.CurrentPageNumber();
+
+                                    x.Span(" of ");
+
+                                    x.TotalPages();
+                                });
+                        });
+                    });
+
+            return document.GeneratePdf();
+        }
 
 
     }

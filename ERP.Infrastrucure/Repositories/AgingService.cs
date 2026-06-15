@@ -60,7 +60,7 @@ namespace ERP.Infrastructure.Repositories
                                total_outstanding = customer.Sum(x=>x.pending_amount),
                                invoices = customer.Select(x => new CustomerAgingInvoiceDto 
                                         { 
-                                           invoice_id = x.invoice_id, 
+                                           invoice_ids = x.invoice_ids, 
                                            invoice_no = x.invoice_no, 
                                            invoice_date = x.invoice_date.Date, 
                                            due_date = x.due_date.Date, 
@@ -131,7 +131,7 @@ namespace ERP.Infrastructure.Repositories
                                    total_outstanding = customer.Sum(x => x.pending_amount),
                                    invoices = customer.Select(x => new CustomerAgingInvoiceDto
                                    {
-                                       invoice_id = x.invoice_id,
+                                       invoice_ids = x.invoice_ids,
                                        invoice_no = x.invoice_no,
                                        invoice_date = x.invoice_date.Date,
                                        due_date = x.due_date.Date,

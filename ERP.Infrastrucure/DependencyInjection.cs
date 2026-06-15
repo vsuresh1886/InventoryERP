@@ -66,6 +66,8 @@ namespace ERP.Infrastrucure
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IWhatsappService, WhatsAppService>();
             services.AddScoped<IAgingService, AgingService>();
+            services.AddScoped<IOutstandingService, OutstandingService>();
+            services.AddScoped<ISalesReturnService, SalesReturnService>();
             // Register Services End
 
             return services;

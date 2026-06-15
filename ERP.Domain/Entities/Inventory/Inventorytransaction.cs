@@ -15,11 +15,14 @@ namespace ERP.Domain.Entities.Inventory
         public long item_id { get; set; }
         public string? transaction_type { get; set; }
         public decimal? quantity { get; set; }
+        public decimal? quantity_in { get; set; }
+        public decimal? quantity_out { get; set; }
         public decimal? unit_price { get; set; }
         public decimal? total_amount { get; set; }
         public DateTime transaction_date { get; set; }
         public string? reference_type { get; set; }
         public long reference_id { get; set; }
+        public string? reference_no { get; set; }
         public long warehouse_id { get; set; }
         public long location_id { get; set; }
         public string? remarks { get; set; }

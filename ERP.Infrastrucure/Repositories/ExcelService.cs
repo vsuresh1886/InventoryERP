@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using ERP.Application.DTOs;
+using ERP.Application.DTOs.Accounts;
 using ERP.Application.Interfaces.Repositories;
 using System;
 using System.Collections.Generic;
@@ -419,6 +420,197 @@ namespace ERP.Infrastructure.Repositories
             return stream.ToArray();
         }
 
+        public async Task<byte[]> Gen_customerOS(List<CustomerOutstandingDto> customers)
+        {
+            using var workbook =
+                new XLWorkbook();
+
+            var ws =
+                workbook.Worksheets.Add(
+                    "Customer OutStanding"
+                );
+
+            int row = 1;
+
+            // =====================================================
+            // TITLE
+            // =====================================================
+
+            ws.Range(row, 1, row, 7).Merge();
+
+            ws.Cell(row, 1).Value =
+                "CUSTOMER OUTSTANDING REPORT";
+
+            ws.Cell(row, 1)
+                .Style.Font.Bold = true;
+
+            ws.Cell(row, 1)
+                .Style.Font.FontSize = 18;
+
+            ws.Cell(row, 1)
+                .Style.Alignment.Horizontal =
+                XLAlignmentHorizontalValues.Center;
+
+            row += 2;
+
+            foreach (var customer in customers)
+            {
+                // =====================================================
+                // CUSTOMER HEADER
+                // =====================================================
+
+                ws.Range(row, 1, row, 7)
+                    .Style.Fill.BackgroundColor =
+                    XLColor.DarkBlue;
+
+                ws.Range(row, 1, row, 7)
+                    .Style.Font.FontColor =
+                    XLColor.White;
+
+                ws.Range(row, 1, row, 7)
+                    .Style.Font.Bold = true;
+
+                ws.Cell(row, 1).Value =
+                    $"Customer : {customer.customer_name}";
+
+                ws.Cell(row, 5).Value =
+                    $"Invoice : {customer.totalInvoiceAmount:N2}";
+
+                ws.Cell(row, 6).Value =
+                    $"Received : {customer.totalReceivedAmount:N2}";
+
+                ws.Cell(row, 7).Value =
+                    $"Pending : {customer.totalPendingAmount:N2}";
+
+
+                row += 2;
+
+                // =====================================================
+                // TABLE HEADER
+                // =====================================================
+
+                ws.Cell(row, 1).Value =
+                    "Invoice No";
+
+                ws.Cell(row, 2).Value =
+                    "Invoice Date";
+
+                ws.Cell(row, 3).Value =
+                    "Due Date";
+
+                ws.Cell(row, 4).Value =
+                    "Age Days";
+
+                ws.Cell(row, 5).Value =
+                    "Invoice Amount";
+
+                ws.Cell(row, 6).Value =
+                    "Received Amount";
+
+                ws.Cell(row, 7).Value =
+                    "Pending Amount";
+
+                var header =
+                    ws.Range(row, 1, row, 7);
+
+                header.Style.Font.Bold = true;
+
+                header.Style.Fill.BackgroundColor =
+                    XLColor.Gray;
+
+                header.Style.Font.FontColor =
+                    XLColor.White;
+
+                row++;
+
+                // =====================================================
+                // DETAILS
+                // =====================================================
+
+                foreach (
+                    var invoice
+                    in customer.Invoices
+                )
+                {
+                    ws.Cell(row, 1).Value =
+                        invoice.invoice_no;
+
+                    ws.Cell(row, 2).Value =
+                        invoice.invoice_date.ToShortDateString();
+
+                    ws.Cell(row, 3).Value =
+                        invoice.due_date.ToShortDateString();
+
+                    ws.Cell(row, 4).Value =
+                        invoice.age_days;
+
+                    ws.Cell(row, 5).Value =
+                        invoice.invoice_amount;
+
+                    ws.Cell(row, 6).Value =
+                        invoice.received_amount;
+
+                    ws.Cell(row, 7).Value =
+                        invoice.pending_amount;
+
+                    
+
+                    // DATE FORMAT
+
+                    ws.Cell(row, 2)
+                        .Style.DateFormat.Format =
+                        "dd-MM-yyyy";
+
+                    ws.Cell(row, 3)
+                        .Style.DateFormat.Format =
+                        "dd-MM-yyyy";
+
+                    // NUMBER FORMAT
+
+                    ws.Range(row, 5, row, 7)
+                        .Style.NumberFormat.Format =
+                        "#,##0.00";
+
+                    // ZEBRA ROWS
+
+                    if (row % 2 == 0)
+                    {
+                        ws.Range(row, 1, row, 7)
+                            .Style.Fill.BackgroundColor =
+                            XLColor.AliceBlue;
+                    }
+
+                    row++;
+                }
+
+                row += 2;
+            }
+
+            // =====================================================
+            // FINAL STYLING
+            // =====================================================
+
+            ws.Columns()
+                .AdjustToContents();
+
+            ws.SheetView
+                .FreezeRows(3);
+
+            ws.RangeUsed()
+                .Style.Border.OutsideBorder =
+                XLBorderStyleValues.Thin;
+
+            ws.RangeUsed()
+                .Style.Border.InsideBorder =
+                XLBorderStyleValues.Thin;
+
+            using var stream =
+                new MemoryStream();
+
+            workbook.SaveAs(stream);
+
+            return stream.ToArray();
+        }
 
 
     }
