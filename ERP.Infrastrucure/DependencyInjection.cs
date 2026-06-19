@@ -34,11 +34,18 @@ namespace ERP.Infrastrucure
                         services.AddDbContext<AuthDbContext>(options =>
                             options.UseNpgsql(connString));
                         break;
+                    case "PostgreSQL_Production": // 👈 Add this line to catch the production label on Render
+                        services.AddDbContext<AppDbContext>(options =>
+                            options.UseNpgsql(connString));
+
+                        services.AddDbContext<AuthDbContext>(options =>
+                            options.UseNpgsql(connString));
+                        break;
 
                     case "SqlServer":
-                        services.AddDbContext<AppDbContext>(options =>
-                            options.UseSqlServer(connString));
-                        break;
+                            services.AddDbContext<AppDbContext>(options =>
+                                options.UseSqlServer(connString));
+                            break;
 
                     case "Oracle":
                         services.AddDbContext<AppDbContext>(options =>
