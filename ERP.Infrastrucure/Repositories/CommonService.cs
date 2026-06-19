@@ -43,7 +43,7 @@ namespace ERP.Infrastructure.Repositories
                             is_sortable = x.is_sortable,
                             is_filterable = x.is_filterable,
                             display_order = x.display_order
-                }).ToListAsync();
+                }).OrderBy(x=>x.display_order).ToListAsync();
                 
                 return GridHead;
 

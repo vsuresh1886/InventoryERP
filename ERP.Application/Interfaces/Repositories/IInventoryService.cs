@@ -13,5 +13,7 @@ namespace ERP.Application.Interfaces.Repositories
         Task<InventoryItemDto> GetInvdtl(int id);
         Task<InventoryItemDto> CreateUpdateInv(InventoryItemDto inventoryItem);
 
+        Task PostTransactionAsync(string transactionCode, long referenceId, string referenceNo, List<InventoryPostingLine> lines, bool isStockIn);
+
     }
 }

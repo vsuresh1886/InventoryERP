@@ -1,4 +1,5 @@
-﻿using ERP.Application.DTOs;
+﻿using DocumentFormat.OpenXml.InkML;
+using ERP.Application.DTOs;
 using ERP.Application.DTOs.Inventory;
 using ERP.Application.Interfaces.Repositories;
 using ERP.Application.Interfaces.Repositories.CodeGenerator;
@@ -448,6 +449,47 @@ namespace ERP.Infrastructure.Repositories
             }
 
         }
+
+        public async Task PostTransactionAsync(   string transactionCode,   long referenceId,   string referenceNo,  List<InventoryPostingLine> lines,  bool isStockIn)
+        {
+            try
+            {
+                var transactions = lines.Select(x =>
+                new InventoryTransaction
+                {
+                    item_id = x.ItemId,
+
+                    quantity= x.Quantity,
+
+                    quantity_in =
+                        isStockIn ? x.Quantity : 0,
+
+                    quantity_out =
+                        isStockIn ? 0 : x.Quantity,
+
+                    transaction_type =  isStockIn ? "IN" : "OUT",
+
+                    reference_type = transactionCode,
+
+                    reference_id = referenceId,
+                    reference_no = referenceNo,
+
+                    transaction_date = DateTime.UtcNow,
+
+                    created_at = DateTime.UtcNow,
+                    created_by = 1 //(int)_currentuser.UserId
+                });
+
+                 _InvDbContext.inventoryTransactions.AddRange(transactions);
+                await _InvDbContext.SaveChangesAsync();
+            }
+            catch(Exception Ex)
+            {
+                throw;
+            }
+            
+        }
+      
 
     }
 }

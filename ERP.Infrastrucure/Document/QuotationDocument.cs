@@ -14,93 +14,121 @@ namespace ERP.Infrastructure.Document
     public  class QuotationDocument : IDocument
     {
         private readonly QuotationModel _data;
-        
+
+        // Use QuestPDF's Color.FromHex to ensure they are the correct type
+        private readonly Color PrimaryColor = Color.FromHex("#1E293B");
+        private readonly Color AccentColor = Color.FromHex("#0F766E");
+        private readonly Color TextColor = Color.FromHex("#334155");
+        private readonly Color LightGray = Color.FromHex("#F8FAFC");
+        private readonly Color BorderColor = Color.FromHex("#E2E8F0");
+
         public QuotationDocument(QuotationModel data)
         {
             _data = data;
         }
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
-        
-        
+
+
         public void Compose(IDocumentContainer container)
         {
             container.Page(page =>
             {
-                page.Margin(20);
+                page.Margin(40); // Increased margin for breathing room
+                page.Size(PageSizes.A4);
+                page.DefaultTextStyle(x => x.FontSize(10).FontColor(TextColor));
 
-                page.Header().Text("QUOTATION").Bold().FontSize(18).AlignRight();
+                // --- HEADER ---
+                page.Header().Row(row =>
+                {
+                    row.RelativeColumn().Column(col =>
+                    {
+                        col.Item().Text(_data.companyname).Bold().FontSize(20).FontColor(PrimaryColor);
+                        col.Item().Text(_data.companyaddress).FontSize(9).FontColor("#64748B");
+                        if (!string.IsNullOrEmpty(_data.gstin))
+                            col.Item().Text($"GSTIN: {_data.gstin}").FontSize(9).FontColor("#64748B");
+                    });
 
+                    row.RelativeColumn().AlignRight().Column(col =>
+                    {
+                        col.Item().Text("QUOTATION").Bold().FontSize(24).FontColor(AccentColor);
+                        col.Item().PaddingTop(5).Text($"Quote No: {_data.quotationno}").Bold();
+                        col.Item().Text($"Date: {_data.quotationdate.ToString("dd-MM-yyyy")}");
+                    });
+                });
+
+                // --- CONTENT ---
                 page.Content().Column(col =>
                 {
-                    col.Item().Text(_data.companyname).Bold();
-                    col.Item().Text(_data.companyaddress);
-                    col.Item().Text($"GSTIN: {_data.gstin}");
-
-                   
-                    col.Item().PaddingTop(10).Row(row =>
+                    // Customer & Meta Info Cards
+                    col.Item().PaddingTop(25).Row(row =>
                     {
-                        // 🔹 LEFT: CUSTOMER DETAILS
-                        row.RelativeColumn().Border(1).Padding(8).Column(c =>
+                        // Bill To Section
+                        row.RelativeColumn().Border(1).BorderColor(BorderColor).Background(LightGray).Padding(12).Column(c =>
                         {
-                            c.Item().Text("Bill To").Bold().FontSize(11);
-                            c.Item().Text(_data.contactperson);
-                            c.Item().Text(_data.customername);
+                            c.Item().Text("BILL TO").Bold().FontSize(9).FontColor("#64748B");
+                            c.Item().PaddingTop(4).Text(_data.customername).Bold().FontSize(11).FontColor(PrimaryColor);
+                            if (!string.IsNullOrEmpty(_data.contactperson))
+                                c.Item().Text($"Attn: {_data.contactperson}");
                             c.Item().Text(_data.customeraddress);
 
-                            if (!string.IsNullOrEmpty(_data.contactperson))
-                                c.Item().Text($"Contact : {_data.contact}");
+                            if (!string.IsNullOrEmpty(_data.contact))
+                                c.Item().Text($"Contact: {_data.contact}").FontSize(9);
                         });
 
-                        // 🔹 RIGHT: QUOTATION INFO
-                        row.RelativeColumn().Border(1).Padding(8).Column(c =>
+                        row.ConstantColumn(20); // Spacer
+
+                        // Quotation Details Section
+                        row.RelativeColumn().Border(1).BorderColor(BorderColor).Padding(12).Column(c =>
                         {
-                            c.Item().Text("Quotation Details").Bold().FontSize(11);
+                            c.Item().Text("QUOTATION DETAILS").Bold().FontSize(9).FontColor("#64748B");
 
-                            c.Item().Row(r =>
+                            c.Item().PaddingTop(6).Row(r =>
                             {
-                                r.RelativeColumn().Text("Quote No:");
-                                r.ConstantColumn(120).AlignRight().Text(_data.quotationno).Bold();
+                                r.RelativeColumn().Text("Validity:");
+                                r.ConstantColumn(120).AlignRight().Text(!string.IsNullOrEmpty(_data.validity) ? _data.validity : "N/A").Bold();
                             });
 
-                            c.Item().Row(r =>
-                            {
-                                r.RelativeColumn().Text("Date:");
-                                r.ConstantColumn(120).AlignRight().Text(_data.quotationdate.ToString("dd-MM-yyyy"));
-                            });
-
-                            if (!string.IsNullOrEmpty(_data.validity))
-                            {
-                                c.Item().Row(r =>
-                                {
-                                    r.RelativeColumn().Text("Validity:");
-                                    r.ConstantColumn(120).AlignRight().Text(_data.validity);
-                                });
-                            }
+                            // You can add more metadata rows here seamlessly
                         });
                     });
 
-                    col.Item().PaddingTop(10).Element(ComposeTable);
+                    // Items Table
+                    col.Item().PaddingTop(25).Element(ComposeTable);
 
-                    col.Item().PaddingTop(10).Row(row =>
+                    // Totals & Summary
+                    col.Item().PaddingTop(20).Row(row =>
                     {
-                        // 🔹 LEFT: Amount in words
-                        row.RelativeColumn().Text($"Amount in words: {_data.amtinwords}");
-
-                        // 🔹 RIGHT: Totals aligned with table
-                        row.ConstantColumn(220).Column(col2 =>
+                        // Left: Amount in words
+                        row.RelativeColumn().PaddingRight(40).Column(c =>
                         {
-                            col2.Item().Element(c=> TotalRow(c, "Sub Total", _data.subtotal));
-                            col2.Item().Element(c => TotalRow(c, "tax", _data.gst));
-                           // col2.Item().Element(TotalRow("SGST", _data.SGST));
-                            col2.Item().Element(c => TotalRow(c, "Discount", _data.discount));
-                            col2.Item().Element(c => TotalRow(c, "Grand Total", _data.total, true));
+                            if (!string.IsNullOrEmpty(_data.amtinwords))
+                            {
+                                c.Item().Text("Amount in Words:").Bold().FontSize(9).FontColor("#64748B");
+                                c.Item().Text(_data.amtinwords).Italic().FontSize(10);
+                            }
+                        });
+
+                        // Right: Financial Summary
+                        row.ConstantColumn(240).Column(col2 =>
+                        {
+                            col2.Item().Element(c => TotalRow(c, "Sub Total", _data.subtotal));
+
+                            if (_data.gst > 0)
+                                col2.Item().Element(c => TotalRow(c, "Tax (GST)", _data.gst));
+
+                            if (_data.discount > 0)
+                                col2.Item().Element(c => TotalRow(c, "Discount", _data.discount, isNegative: true));
+
+                            col2.Item().PaddingTop(4).BorderTop(1).BorderColor(PrimaryColor).Element(c => TotalRow(c, "Grand Total", _data.total, isBold: true));
                         });
                     });
                 });
 
-                page.Footer().AlignCenter().Text(x =>
+                // --- FOOTER ---
+                page.Footer().AlignCenter().PaddingTop(20).Text(x =>
                 {
+                    x.DefaultTextStyle(t => t.FontSize(9).FontColor("#94A3B8"));
                     x.Span("Page ");
                     x.CurrentPageNumber();
                     x.Span(" of ");
@@ -116,58 +144,81 @@ namespace ERP.Infrastructure.Document
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(40);
-                    columns.ConstantColumn(80);
-                    columns.RelativeColumn();
-                    columns.ConstantColumn(50);
-                    columns.ConstantColumn(80);
-                    columns.ConstantColumn(80);
+                    columns.ConstantColumn(40);   // S.No
+                    columns.ConstantColumn(90);   // Part No
+                    columns.RelativeColumn();     // Description
+                    columns.ConstantColumn(50);   // Qty
+                    columns.ConstantColumn(90);   // Unit Rate
+                    columns.ConstantColumn(100);  // Total Rate
                 });
 
+                // Table Header Setup
                 table.Header(header =>
                 {
-                    
-                    header.Cell().Element(CellStyle).AlignCenter().Text("S.No").Bold();
-                    header.Cell().Element(CellStyle).AlignCenter().Text("Part No").Bold();
-                    header.Cell().Element(CellStyle).AlignCenter().Text("Description").Bold();
-                    header.Cell().Element(CellStyle).AlignCenter().Text("Qty").Bold();
-                    header.Cell().Element(CellStyle).AlignCenter().Text("Unit Rate").Bold();
-                    header.Cell().Element(CellStyle).AlignCenter().Text("Rate").Bold();
-
+                    header.Cell().Element(HeaderStyle).AlignCenter().Text("S.No");
+                    header.Cell().Element(HeaderStyle).Text("Part No");
+                    header.Cell().Element(HeaderStyle).Text("Description");
+                    header.Cell().Element(HeaderStyle).AlignRight().Text("Qty");
+                    header.Cell().Element(HeaderStyle).AlignRight().Text("Unit Rate");
+                    header.Cell().Element(HeaderStyle).AlignRight().Text("Amount");
                 });
 
                 int index = 1;
 
                 foreach (var item in _data.items)
                 {
-                    table.Cell().Element(CellStyle).Text(index++.ToString());
-                    table.Cell().Element(CellStyle).Text(item.partno);
-                    table.Cell().Element(CellStyle).Text(item.partname);
-                    table.Cell().Element(CellStyle).AlignRight().Text(item.quantity.ToString());
-                    table.Cell().Element(CellStyle).AlignRight().Text(item.unitprice.ToString("N2"));
-                    table.Cell().Element(CellStyle).AlignRight().Text(item.totalprice.ToString("N2"));
+                    // Dynamic background row color for zebra-striping
+                    var rowBg = index % 2 == 0 ? LightGray : Colors.White;
 
+                    table.Cell().Background(rowBg).Element(CellStyle).AlignCenter().Text(index++.ToString());
+                    table.Cell().Background(rowBg).Element(CellStyle).Text(item.partno ?? "-");
+                    table.Cell().Background(rowBg).Element(CellStyle).Text(item.partname);
+                    table.Cell().Background(rowBg).Element(CellStyle).AlignRight().Text(item.quantity.ToString());
+                    table.Cell().Background(rowBg).Element(CellStyle).AlignRight().Text(item.unitprice.ToString("N2"));
+                    table.Cell().Background(rowBg).Element(CellStyle).AlignRight().Text(item.totalprice.ToString("N2"));
                 }
             });
         }
-
-        static IContainer CellStyle(IContainer container)
+        // Header Cell Stylist
+        private IContainer HeaderStyle(IContainer container)
         {
             return container
-                .Border(1)
-                .Padding(5)
-                .BorderColor("#999999");
+                .Background(PrimaryColor)
+                .PaddingVertical(8)
+                .PaddingHorizontal(6)
+                .AlignMiddle()
+                .DefaultTextStyle(x => x.Bold().FontColor(Colors.White).FontSize(9));
         }
-        void TotalRow(IContainer container, string label, decimal value, bool isBold = false)
-        {
-            container.Row(row =>
-            {
-                row.RelativeColumn().Text(label).SemiBold();
 
-                row.ConstantColumn(100)
-                   .AlignRight()
-                   .Text(value.ToString("N2"))
-                   .SemiBold();
+        // Body Cell Stylist
+        private IContainer CellStyle(IContainer container)
+        {
+            return container
+                .BorderBottom(1)
+                .BorderColor(BorderColor)
+                .PaddingVertical(8)
+                .PaddingHorizontal(6)
+                .AlignMiddle();
+        }
+        void TotalRow(IContainer container, string label, decimal value, bool isBold = false, bool isNegative = false)
+        {
+            container.PaddingVertical(3).Row(row =>
+            {
+                // Define standard base style
+                var textStyle = TextStyle.Default.FontSize(10).FontColor(TextColor);
+
+                // Apply conditional bolding/sizing
+                if (isBold)
+                {
+                    textStyle = textStyle.Bold().FontSize(11).FontColor(PrimaryColor);
+                }
+
+                // Left Label
+                row.RelativeColumn().AlignLeft().Text(label).Style(textStyle);
+
+                // Right Value
+                var formattedValue = isNegative ? $"-{value.ToString("N2")}" : value.ToString("N2");
+                row.ConstantColumn(120).AlignRight().Text(formattedValue).Style(textStyle);
             });
         }
 

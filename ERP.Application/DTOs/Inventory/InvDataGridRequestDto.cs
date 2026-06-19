@@ -80,4 +80,30 @@ namespace ERP.Application.DTOs.Inventory
     }
 
 
+    public class InventoryPostingRequest
+    {
+        public long ReferenceId { get; set; }
+
+        public string ReferenceNo { get; set; }
+
+        public string TransactionCode { get; set; }
+
+        public InventoryDirection Direction { get; set; }
+
+        public List<InventoryPostingLine> Lines { get; set; }
+    }
+    public class InventoryPostingLine
+    {
+        public long ItemId { get; set; }
+
+        public decimal Quantity { get; set; }
+    }
+    public enum InventoryDirection
+    {
+        In,
+        Out
+    }
+
+
+
 }
