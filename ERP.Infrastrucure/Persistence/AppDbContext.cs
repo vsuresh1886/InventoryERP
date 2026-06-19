@@ -4,6 +4,7 @@ using ERP.Domain.Entities;
 using ERP.Domain.Entities.Accounts;
 using ERP.Domain.Entities.CodeGenerators;
 using ERP.Domain.Entities.Inventory;
+using ERP.Domain.Entities.PurchaseOrder;
 using ERP.Domain.Entities.Quotation;
 using ERP.Domain.Entities.SalesInvoice;
 using ERP.Domain.Entities.SalesReturn;
@@ -65,6 +66,9 @@ namespace ERP.Infrastructure.Persistence
         public DbSet<CustomerAgingRowDto> CustomerAgingRowDtos { get; set; }
         public DbSet<ReceivableOutstandingRowDto> ReceivableOutstandingRowDtos { get; set; }
         public DbSet<MessageSetting> MessageSettings { get; set; }
+
+        public DbSet<PurchaseOrderHeader> purchaseorderheaders { get; set; }
+        public DbSet<purchaseOrderDetail> purchaseOrderDetails { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

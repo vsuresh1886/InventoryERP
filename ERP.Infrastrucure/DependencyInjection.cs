@@ -68,6 +68,7 @@ namespace ERP.Infrastrucure
             services.AddScoped<IAgingService, AgingService>();
             services.AddScoped<IOutstandingService, OutstandingService>();
             services.AddScoped<ISalesReturnService, SalesReturnService>();
+            services.AddScoped<IPurchaseOrderSerice, PurchaseOrderService>();
             // Register Services End
 
             return services;
