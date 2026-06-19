@@ -12,10 +12,12 @@ namespace ERP.API.Controllers
     public class QuotationController : Controller
     {
         public readonly IQuotationService _quotationService;
+        public readonly IPdfService _pdfservice;
         
-        public QuotationController(IQuotationService quotationService)
+        public QuotationController(IQuotationService quotationService,IPdfService pedfservice)
         {
             _quotationService = quotationService;
+            _pdfservice = pedfservice;
         }
 
 
@@ -32,11 +34,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Quutation"));
                 }
             }
             catch (Exception ex)
@@ -59,11 +57,7 @@ namespace ERP.API.Controllers
                 }
                 else
                 {
-                    return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid  configuration",
-                                 null
-                            ));
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Quotation"));
                 }
             }
             catch (Exception ex)
@@ -105,5 +99,13 @@ namespace ERP.API.Controllers
             }
         }
 
+        [HttpGet("{id}/pdf")]
+        public async Task<IActionResult> getPdf(int id)
+        {
+            var model = await _quotationService.quotationpdfdata(id);
+            var pdf =  _pdfservice.GenerateQuotationPdf(model);
+            return File(pdf, "application/pdf", $"Quotation1.pdf");
+        }
+       
     }
 }

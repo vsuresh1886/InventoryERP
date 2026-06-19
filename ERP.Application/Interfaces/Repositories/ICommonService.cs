@@ -11,6 +11,7 @@ namespace ERP.Application.Interfaces.Repositories
         public Task<List<DropdownDto>> FetchRoles();
         public Task<List<DropdownDto>> FetchDepartment();
         public Task<List<DropdownDto>> FetchStatus();
+        public Task<List<DropdownDto>> FetchStatuses(int form_id, string type);
         public Task<List<DropdownDto>> FetchCountry();
         public Task<List<DropdownDto>> FetchPartyType();
         public Task<List<DropdownDto>> FetchDomain();

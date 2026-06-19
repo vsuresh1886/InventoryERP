@@ -23,18 +23,10 @@ namespace ERP.API.Controllers
             var result = await _authService.LoginAsync(request);
             if(result == null)
             {
-                return Unauthorized(new ApiResponse<object>(
-                                 false,
-                                 "Invalid email or password",
-                                 null
-                            ));
+                return Unauthorized(ApiResponseHelper.Fail<object>("Invalid email or password"));
             }
 
-            return Ok(new ApiResponse<AuthResponseDto>(
-                                    true,
-                                    "Login successful",
-                                    result
-                                ));
+            return Ok(ApiResponseHelper.Success(result, "Login successful"));
 
         }       
     }

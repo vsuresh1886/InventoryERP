@@ -43,7 +43,7 @@ namespace ERP.Infrastructure.Repositories
                             is_sortable = x.is_sortable,
                             is_filterable = x.is_filterable,
                             display_order = x.display_order
-                }).ToListAsync();
+                }).OrderBy(x=>x.display_order).ToListAsync();
                 
                 return GridHead;
 
@@ -101,6 +101,23 @@ namespace ERP.Infrastructure.Repositories
                                     new DropdownDto { Id = 0, Name = "InActive" },
                                     new DropdownDto { Id = 1, Name = "Active" }
                                 }.ToList();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+        public async Task<List<DropdownDto>> FetchStatuses(int form_id, string type)
+        {
+            try
+            {
+                var result = await _context.ddlookups.Where(x=>x.lookup_type == type).Select( item => new DropdownDto
+                                {
+                                    Id = (int)item.id,
+                                    Name = item.value,
+                                }).ToListAsync();
 
                 return result;
             }
@@ -320,7 +337,8 @@ namespace ERP.Infrastructure.Repositories
                                     price = view.unit_price,
 
                                     // Optional GST (use later)
-                                    gstPct = config != null ? 0 : 0
+                                    gstPct = config != null ? 0 : 0,
+                                    availableStock = view.quantity
                                 }
                             ).ToListAsync();
 

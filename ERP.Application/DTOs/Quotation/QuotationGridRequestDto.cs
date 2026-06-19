@@ -33,4 +33,19 @@ namespace ERP.Application.DTOs.Quotation
         public decimal amount { get; set; }
         public string? actions { get; set; }
     }
+
+    public class AiQuotationfilterDto
+    {
+     
+        public int? quotationno { get; set; }
+        public List<string>? customer { get; set; }
+        public List<string>? salesperson { get; set; }
+        public string? datefrom { get; set; }
+        public string? dateto { get; set; }
+        public int? status { get; set; }
+
+    }
+
+
+
 }

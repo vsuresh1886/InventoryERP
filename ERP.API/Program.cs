@@ -1,9 +1,12 @@
+using ERP.Application.Models;
+using ERP.Application.Models.Notification;
 using ERP.Infrastructure.Persistence;
+using ERP.Infrastructure.Repositories;
 using ERP.Infrastrucure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using ERP.Application.Models;
+using QuestPDF.Infrastructure;
 using System.Text;
 
 
@@ -56,7 +59,9 @@ builder.Services.AddOpenApi();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
+QuestPDF.Settings.License = LicenseType.Community;
+builder.Services.AddHttpClient<AiService>();
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("smtpSettings"));
 var app = builder.Build();
 
 // 2. Enable CORS before MapControllers

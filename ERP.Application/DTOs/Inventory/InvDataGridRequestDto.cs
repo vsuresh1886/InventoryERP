@@ -38,6 +38,7 @@ namespace ERP.Application.DTOs.Inventory
         public string? domain { get; set; }
 
         public decimal quantity { get; set; }
+        public decimal? min_stock { get; set; }
 
         public decimal? max_stock { get; set; }
 
@@ -77,6 +78,32 @@ namespace ERP.Application.DTOs.Inventory
 
         public string? status { get; set; }
     }
+
+
+    public class InventoryPostingRequest
+    {
+        public long ReferenceId { get; set; }
+
+        public string ReferenceNo { get; set; }
+
+        public string TransactionCode { get; set; }
+
+        public InventoryDirection Direction { get; set; }
+
+        public List<InventoryPostingLine> Lines { get; set; }
+    }
+    public class InventoryPostingLine
+    {
+        public long ItemId { get; set; }
+
+        public decimal Quantity { get; set; }
+    }
+    public enum InventoryDirection
+    {
+        In,
+        Out
+    }
+
 
 
 }

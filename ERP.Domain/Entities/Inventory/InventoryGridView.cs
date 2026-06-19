@@ -22,6 +22,7 @@ namespace ERP.Domain.Entities.Inventory
             public string? domain { get; set; }
             public string? unit { get; set; }
             public decimal quantity { get; set; }
+            public decimal? minstock { get; set; }
             public decimal? maxstock { get; set; }
             public string? partnumber { get; set; }
             public string? tags { get; set; }
