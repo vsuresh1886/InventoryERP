@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ERP.Application.Interfaces.Repositories.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,7 +8,7 @@ using System.Text;
 namespace ERP.Domain.Entities.SalesInvoice
 {
     [Table("invoice_header")]
-        public class InvoiceHeader
+        public class InvoiceHeader:IMustHaveTenant
         {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -31,5 +32,6 @@ namespace ERP.Domain.Entities.SalesInvoice
             public decimal  balance_amount { get; set; }
             public decimal paid_amount { get; set; }
             public int payment_status { get; set; }
+            public long? company_id { get; set; }
         }
 }

@@ -1,8 +1,10 @@
 ﻿using ERP.Application.DTOs;
 using ERP.Application.DTOs.Accounts;
+using ERP.Application.Interfaces.Repositories.Common;
 using ERP.Domain.Entities;
 using ERP.Domain.Entities.Accounts;
 using ERP.Domain.Entities.CodeGenerators;
+using ERP.Domain.Entities.Company;
 using ERP.Domain.Entities.Inventory;
 using ERP.Domain.Entities.PurchaseOrder;
 using ERP.Domain.Entities.Quotation;
@@ -13,14 +15,22 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq.Expressions;
 using System.Text;
 
 namespace ERP.Infrastructure.Persistence
 {
     public class AppDbContext:DbContext
     {
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+        private readonly ICurrentTenantService _tenantService;
 
+        // Inject the Tenant Service alongside DB Options
+        public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentTenantService tenantService) : base(options) 
+        {
+            _tenantService = tenantService;
+        }
+
+        public DbSet<company> companies { get; set; }
         public DbSet<Menu> Menus { get; set; }
         public DbSet<RolePermissions> RolePermissions { get; set; }
         public DbSet<Roles> Roles { get; set; } 
@@ -70,6 +80,84 @@ namespace ERP.Infrastructure.Persistence
         public DbSet<PurchaseOrderHeader> purchaseorderheaders { get; set; }
         public DbSet<purchaseOrderDetail> purchaseOrderDetails { get; set; }
 
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            // 1. Get all entities that are being Added or Modified
+            var entries = ChangeTracker.Entries()
+                .Where(e => e.Entity is IMustHaveTenant &&
+                           (e.State == EntityState.Added || e.State == EntityState.Modified));
+
+            // 2. Fetch the current company ID from your injected tenant service
+            long? currentCompanyId = _tenantService.CompanyId;
+
+            if (currentCompanyId == 0)
+            {
+                // Bypass is active (Signup mode). 
+                // Pass control straight to EF Core to save what was manually assigned in the service.
+                return base.SaveChangesAsync(cancellationToken);
+            }
+
+            if (currentCompanyId == null)
+            {
+                // This prevents orphaned data or system operations without a tenant context
+                throw new UnauthorizedAccessException("Cannot save multi-tenant data without a valid company context.");
+            }
+
+            foreach (var entry in entries)
+            {
+                var entity = (IMustHaveTenant)entry.Entity;
+
+                if (entry.State == EntityState.Added)
+                {
+                    // Automatically assign the company ID on creation
+                    entity.company_id = currentCompanyId.Value;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    // Safety Catch: Ensure a tenant can never maliciously alter or swap the company_id during an update
+                    entry.Property(nameof(IMustHaveTenant.company_id)).IsModified = false;
+                }
+            }
+
+            // 3. Pass control back to standard EF Core saving mechanics
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        // Keep a synchronous override just in case your application calls .SaveChanges() anywhere
+        public override int SaveChanges()
+        {
+            var entries = ChangeTracker.Entries()
+                .Where(e => e.Entity is IMustHaveTenant &&
+                           (e.State == EntityState.Added || e.State == EntityState.Modified));
+
+            long? currentCompanyId = _tenantService.CompanyId;
+
+            if (currentCompanyId == 0)
+            {
+                // Bypass is active (Signup mode). 
+                // Pass control straight to EF Core to save what was manually assigned in the service.
+                return base.SaveChanges();
+            }
+            if (currentCompanyId == null)
+                throw new UnauthorizedAccessException("Cannot save multi-tenant data without a valid company context.");
+
+            foreach (var entry in entries)
+            {
+                var entity = (IMustHaveTenant)entry.Entity;
+                if (entry.State == EntityState.Added)
+                {
+                    entity.company_id = currentCompanyId.Value;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entry.Property(nameof(IMustHaveTenant.company_id)).IsModified = false;
+                }
+            }
+
+            return base.SaveChanges();
+        }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<RolePermissions>()
@@ -87,6 +175,35 @@ namespace ERP.Infrastructure.Persistence
             modelBuilder.Entity<CustomerSOARowDto>(entity=> { entity.HasNoKey(); entity.ToView(null); });
             modelBuilder.Entity<CustomerAgingRowDto>(entity => { entity.HasNoKey(); entity.ToView(null); });
             modelBuilder.Entity<ReceivableOutstandingRowDto>(entity => { entity.HasNoKey(); entity.ToView(null); });
+
+            modelBuilder.Entity<code_sequence_tracker>().HasIndex(t => new { t.company_id, t.module_name }).IsUnique();
+            // ==========================================
+            // AUTOMATIC GLOBAL TENANT FILTER LOGIC
+            // ==========================================
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                // Check if entity implements IMustHaveTenant
+                if (typeof(IMustHaveTenant).IsAssignableFrom(entityType.ClrType))
+                {
+                    var parameter = Expression.Parameter(entityType.ClrType, "e");
+                    var property = Expression.Property(parameter, nameof(IMustHaveTenant.company_id));
+
+                    // 🎯 FIX: Get the actual type of the company_id property (e.g., long or int)
+                    var propertyType = property.Type;
+
+                    var tenantServiceProperty = Expression.Property(Expression.Constant(_tenantService), nameof(ICurrentTenantService.CompanyId));
+
+                    // 🎯 FIX: Convert the tenant service value to match the exact property type
+                    var filterCondition = Expression.Equal(property, Expression.Convert(tenantServiceProperty, propertyType));
+
+                    var lambda = Expression.Lambda(filterCondition, parameter);
+
+                    // Apply the filter to this entity type
+                    modelBuilder.Entity(entityType.ClrType).HasQueryFilter(lambda);
+                }
+            }
+
+
         }
     }
 }

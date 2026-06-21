@@ -1,4 +1,5 @@
-﻿using ERP.Application.Interfaces.Repositories;
+﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using ERP.Application.Interfaces.Repositories;
 using ERP.Application.Interfaces.Repositories.CodeGenerator;
 using ERP.Application.Interfaces.Repositories.Common;
 using ERP.Application.Interfaces.Repositories.Notification;
@@ -55,6 +56,7 @@ namespace ERP.Infrastrucure
 
             // Register Services
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<IMenuService, MenuService>();
             services.AddScoped<IPermissionService, PermissionService>();
             services.AddScoped<ICommonService, CommonService>();
@@ -76,6 +78,9 @@ namespace ERP.Infrastrucure
             services.AddScoped<IOutstandingService, OutstandingService>();
             services.AddScoped<ISalesReturnService, SalesReturnService>();
             services.AddScoped<IPurchaseOrderSerice, PurchaseOrderService>();
+            services.AddScoped<IPasswordService, PasswordService>();
+            services.AddScoped<ICurrentTenantService, CurrentTenantService>();
+            services.AddScoped<ISignupService, SignupService>();
             // Register Services End
 
             return services;
