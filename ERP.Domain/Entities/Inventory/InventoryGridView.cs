@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ERP.Application.Interfaces.Repositories.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
@@ -9,7 +10,7 @@ namespace ERP.Domain.Entities.Inventory
 
     [Table("inventory_grid_view")]
 
-        public class InventoryGridView
+        public class InventoryGridView:IMustHaveTenant
         {
         
             public long id { get; set; }
@@ -31,6 +32,7 @@ namespace ERP.Domain.Entities.Inventory
             public decimal? dealer_price { get; set; }
             public decimal? last_purchase_price { get; set; }
             public decimal? unit_price { get; set; }
+            public long? company_id { get; set; }
         }
 
     

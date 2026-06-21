@@ -138,19 +138,25 @@ namespace ERP.Infrastructure.Repositories
 
                 if(!String.IsNullOrWhiteSpace(filters.datefrom) ) 
                 {
-                    var datefrm = DateTimeOffset.Parse(filters.datefrom).UtcDateTime;
-
-                    DateTime dateto;
+                    // 1. Parse the dates from the filter strings
+                    var datefrm = DateTime.Parse(filters.datefrom).Date;
+                    DateTime datetoNextDay;
 
                     if (!string.IsNullOrWhiteSpace(filters.dateto))
                     {
-                        dateto = DateTimeOffset.Parse(filters.dateto).UtcDateTime;
+                        datetoNextDay = DateTime.Parse(filters.dateto).Date.AddDays(1);
                     }
                     else
                     {
-                        dateto = datefrm;
+                        datetoNextDay = datefrm.AddDays(1);
                     }
-                    query = query.Where(x => x.q.quotation_date >= datefrm && x.q.quotation_date <= dateto);
+
+                    //  THE CRITICAL FIX: Convert Kind from 'Unspecified' to 'Utc'
+                    var datefrmUtc = DateTime.SpecifyKind(datefrm, DateTimeKind.Utc);
+                    var datetoNextDayUtc = DateTime.SpecifyKind(datetoNextDay, DateTimeKind.Utc);
+
+                    // 2. Use the Utc-stamped parameters in your query
+                    query = query.Where(x => x.q.quotation_date >= datefrmUtc && x.q.quotation_date < datetoNextDayUtc);
                 }
 
                 var total = await query.CountAsync();

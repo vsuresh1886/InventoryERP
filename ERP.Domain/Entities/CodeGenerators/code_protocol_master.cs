@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ERP.Application.Interfaces.Repositories.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,7 +8,7 @@ using System.Text;
 namespace ERP.Domain.Entities.CodeGenerators
 {
     [Table("code_protocol_master")]
-    public class code_protocol_master
+    public class code_protocol_master : IMustHaveTenant
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -20,5 +21,6 @@ namespace ERP.Domain.Entities.CodeGenerators
         public string? separator { get; set; }
         public string? reset_frequency { get; set; }
         public bool is_active { get; set; }
+        public long? company_id { get; set; }
     }
 }

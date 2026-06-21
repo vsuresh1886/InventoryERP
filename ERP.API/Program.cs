@@ -8,12 +8,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QuestPDF.Infrastructure;
 using System.Text;
+using Twilio;
+using Microsoft.Extensions.Caching.Memory;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
 
-
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 // 1. Add CORS service with a named policy
 builder.Services.AddCors(options =>
 {
@@ -51,7 +53,7 @@ builder.Services.AddAuthorization();
 
 
 // Add services to the container.
-
+builder.Services.AddMemoryCache();
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -62,6 +64,13 @@ builder.Services.AddSwaggerGen();
 QuestPDF.Settings.License = LicenseType.Community;
 builder.Services.AddHttpClient<AiService>();
 builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("smtpSettings"));
+// --- INITIALIZE TWILIO SDK ---
+var twilioSection = builder.Configuration.GetSection("Twilio");
+string accountSid = twilioSection["AccountSid"] ?? throw new ArgumentNullException("Twilio AccountSid is missing");
+string authToken = twilioSection["AuthToken"] ?? throw new ArgumentNullException("Twilio AuthToken is missing");
+
+TwilioClient.Init(accountSid, authToken);
+// -----------------------------
 var app = builder.Build();
 
 // 2. Enable CORS before MapControllers
@@ -74,9 +83,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseExceptionHandler(_ => { });
 
 //app.UseHttpsRedirection();
-
 app.UseAuthorization();
 
 app.MapControllers();

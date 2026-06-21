@@ -23,6 +23,6 @@ namespace ERP.Domain.Entities.Company
         public string phone { get; set; }
         public DateTime trial_end_date { get; set; }
         public bool is_active { get; set; }
-        public TimeSpan created_at { get; set; }
+        public DateTime created_at { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ERP.Application.Interfaces.Repositories.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,7 +8,7 @@ using System.Text;
 namespace ERP.Domain.Entities.PurchaseOrder
 {
     [Table("pur_purchase_order_header")]
-    public class PurchaseOrderHeader
+    public class PurchaseOrderHeader:IMustHaveTenant
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -30,7 +31,7 @@ namespace ERP.Domain.Entities.PurchaseOrder
         public decimal round_off_amount { get; set; }
         public decimal total_amount { get; set; }
         public int status { get; set; }
-        public long company_id { get; set; }
+        public long? company_id { get; set; }
         public long created_by { get; set; }
         public DateTime created_date { get; set; }
         public long modified_by { get; set; }

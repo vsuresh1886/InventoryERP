@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ERP.Application.Interfaces.Repositories.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,7 +8,7 @@ using System.Text;
 namespace ERP.Domain.Entities.Inventory
 {
     [Table("domain_master")]
-    public class Domainmaster
+    public class Domainmaster:IMustHaveTenant
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -17,5 +18,7 @@ namespace ERP.Domain.Entities.Inventory
         public string? description { get; set; }
         public bool is_active { get; set; }
         public DateTime created_at { get; set; }
+
+        public long? company_id { get; set; }
     }
 }

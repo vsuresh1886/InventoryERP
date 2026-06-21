@@ -430,7 +430,9 @@ namespace ERP.Infrastructure.Repositories
                         warehouse_id = 1,
                         location_id = 1,
                         created_at = DateTime.UtcNow,
-                        created_by = _currentuser.UserId
+                        created_by = _currentuser.UserId,
+                        quantity_in = inventoryItem.quantity,
+                        quantity_out = 0
                     };
                     _InvDbContext.inventoryTransactions.Add(invtrans);
                     await _InvDbContext.SaveChangesAsync();

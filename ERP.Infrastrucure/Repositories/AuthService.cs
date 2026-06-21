@@ -1,36 +1,49 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using ERP.Application.DTOs;
+using ERP.Application.Interfaces.Repositories;
+using ERP.Application.Interfaces.Repositories.Common;
+using ERP.Domain.Entities;
+using ERP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
+using System;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using ERP.Application.Interfaces.Repositories;
-using ERP.Infrastructure.Persistence;
-using Microsoft.Extensions.Configuration;
-using ERP.Application.DTOs;
+using System.Text;
 using static ERP.Application.DTOs.Auth;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure.Internal;
-using ERP.Domain.Entities;
 
 namespace ERP.Infrastructure.Repositories
 {
     public class AuthService : IAuthService
     {
-        private readonly AuthDbContext _context;
+        private readonly AppDbContext _context;
+        private readonly IPasswordService _passwordService;
         private readonly IConfiguration _config;
 
-        public AuthService(AuthDbContext context, IConfiguration config)
+        public AuthService(AppDbContext context, IPasswordService passwordService, IConfiguration config)
         {
             _context = context;
+            _passwordService = passwordService;
             _config = config;
         }
 
         public async Task<AuthResponseDto> LoginAsync(LoginRequestDto request)
         {
-            var user = await _context.employee_masters.FirstOrDefaultAsync(x => x.email == request.username);
-            if (user == null || user.password != request.password)
+            var user = await _context.companies
+             .IgnoreQueryFilters() // IMPORTANT: Login bypasses global multi-tenant filters because we don't know the company context yet!
+             .SelectMany(c => _context.employees.Where(e => e.email == request.username))
+             .FirstOrDefaultAsync();
+            if (user == null )
                 return null;
+
+            //  Validate the incoming plain-text password against the secure cryptographic hash stored in the DB
+            bool isPasswordValid = _passwordService.VerifyPassword(request.password, user.password);
+            
+            if (!isPasswordValid)
+                return null; // Password mismatch
+
 
             var token = GenerateJwtToken(user);
 
@@ -53,6 +66,7 @@ namespace ERP.Infrastructure.Repositories
             {
                 new Claim(ClaimTypes.Name, user.email),
                 new Claim("UserId",user.employee_pk.ToString()),
+                new Claim("CompanyId", user.company_id.ToString())
             };
 
             var token = new JwtSecurityToken(
