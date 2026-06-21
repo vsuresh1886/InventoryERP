@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
+using ERP.Application.Interfaces.Repositories.Common;
 
 namespace ERP.Domain.Entities.CodeGenerators
 {
     [Table("code_sequence_tracker")]
-    public class code_sequence_tracker
+    public class code_sequence_tracker:IMustHaveTenant
     {
         [Key]
         public int id { get; set; }
@@ -15,7 +16,7 @@ namespace ERP.Domain.Entities.CodeGenerators
         public string prefix { get; set; }
         public int last_number { get; set; }
         public DateTime last_reset_date { get; set; }
+        public long? company_id { get; set; }
 
-        
     }
 }

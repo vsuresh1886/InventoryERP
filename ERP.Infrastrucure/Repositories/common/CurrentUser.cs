@@ -17,17 +17,20 @@ namespace ERP.Infrastructure.Repositories.common
             _context = context;
         }
 
-        private ClaimsPrincipal User => _context.HttpContext?.User;
+        // Helper properties to safely access the context
+        private HttpContext HttpContext => _context.HttpContext;
+        private ClaimsPrincipal User => HttpContext?.User;
 
         public long UserId =>
-                     long.TryParse(
-                         User?.FindFirst("UserId")?.Value,
-                         out var id) ? id : 0;
-        public string Email =>
-                    User?.FindFirst(ClaimTypes.Email)?.Value;
+            long.TryParse(User?.FindFirst("UserId")?.Value, out var id) ? id : 0;
 
+        // FIX: Match ClaimTypes.Name because that's what your token generator uses!
+        public string Email =>
+            User?.FindFirst(ClaimTypes.Name)?.Value;
+
+        // FIX: Match "CompanyId" string from your JWT generation logic
         public long TenantId =>
-            long.Parse(User?.FindFirst("tenantId")?.Value ?? "0");
+            long.TryParse(User?.FindFirst("CompanyId")?.Value, out var id) ? id : 0;
 
         public string Role =>
             User?.FindFirst(ClaimTypes.Role)?.Value;

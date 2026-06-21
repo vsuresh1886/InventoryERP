@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ERP.Application.Interfaces.Repositories.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,7 +8,7 @@ using System.Text;
 namespace ERP.Domain.Entities.Inventory
 {
     [Table("inventory_transaction")]
-    public class InventoryTransaction
+    public class InventoryTransaction:IMustHaveTenant
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -28,5 +29,6 @@ namespace ERP.Domain.Entities.Inventory
         public string? remarks { get; set; }
         public DateTime created_at { get; set; }
         public long created_by { get; set; }
+        public long? company_id { get; set; }
     }
 }

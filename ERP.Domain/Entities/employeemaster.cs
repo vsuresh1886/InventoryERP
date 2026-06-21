@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ERP.Application.Interfaces.Repositories.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,7 +8,7 @@ using System.Text;
 namespace ERP.Domain.Entities
 {
     [Table("employee_master")]
-    public class employee_master
+    public class employee_master:IMustHaveTenant
         {
             [Key]
             [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -31,6 +32,8 @@ namespace ERP.Domain.Entities
             public DateTime? updated_at { get; set; }
             public string? password { get; set; }
             public string? profile_img { get; set; }
+
+            public long? company_id { get; set; }
 
         }
     }

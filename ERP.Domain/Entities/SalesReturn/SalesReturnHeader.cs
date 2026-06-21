@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ERP.Application.Interfaces.Repositories.Common;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -7,14 +8,14 @@ using System.Text;
 namespace ERP.Domain.Entities.SalesReturn
 {
     [Table("sales_return_header")]
-    public class SalesReturnHeader
+    public class SalesReturnHeader:IMustHaveTenant
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long id { get; set; }
         public string return_no { get; set; }
         public DateTime return_date { get; set; }
-        public long company_id { get; set; }
+        public long? company_id { get; set; }
         public long customer_id { get; set; }
         public long invoice_id { get; set; }
         public string remarks { get; set; }
@@ -33,5 +34,6 @@ namespace ERP.Domain.Entities.SalesReturn
         public int? discount_percentage { get; set; }
 
         public int? return_reason_id { get; set; }
+        
     }
 }
