@@ -101,7 +101,7 @@ namespace ERP.Infrastructure.Repositories
                         Role = x.dsm.designation_name,
                         Department_Id = x.em.department_id,
                         Department = x.dm.department_name,
-                        Status = x.em.status,
+                        Status = x.em.status == "1"? "Active":"InActive",
                         Phone = x.em.phone,
                         Country = x.em.country,
                         Actions = ""
@@ -119,7 +119,7 @@ namespace ERP.Infrastructure.Repositories
                 throw;
             }
         }
-        public async Task<EmployeeDetailDto> FetchUser(int employeeCode)
+        public async Task<EmployeeDetailDto> FetchUser(long employeeCode)
         {
             
             try
@@ -142,7 +142,8 @@ namespace ERP.Infrastructure.Repositories
                     city = x.city,
                     state = x.state,
                     country = x.country,
-                    status = x.status
+                    status = x.status,
+                    
                 }).FirstOrDefaultAsync();
                 if (query != null)
                 {
@@ -157,6 +158,35 @@ namespace ERP.Infrastructure.Repositories
             }
             
              
+        }
+
+
+        public async Task<UserDetDto> FetchUserDet(long userId)
+        {
+            try
+            {
+
+                var query = await _context.employees.Where(x => x.employee_pk == userId).Select(x => new UserDetDto
+                {
+                    id = x.employee_pk,
+                    name = x.first_name + " " + x.last_name,
+                   
+                    designation = _context.designation_Masters.Where(y=>y.designation_pk == x.designation_id).Select(z=>z.designation_name).FirstOrDefault(),
+                    photoUrl = "  ",
+                    companyName = _context.companies.Where(y=>y.id == x.company_id).Select(z=>z.company_name).FirstOrDefault(),
+
+                }).FirstOrDefaultAsync();
+                if (query != null)
+                {
+                    return query;
+                }
+                else { return null; }
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
         public async Task<EmployeeSaveDto> CreateUpdateUser(EmployeeSaveDto employee)

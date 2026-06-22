@@ -26,12 +26,11 @@ namespace ERP.API.Controllers
                 var result = await _customerservice.FetchGridData(requestDto);
                 if (result != null)
                 {
-                    // return Ok(new { success = true, message = "Grid Data Fetched Successfully", result });
-                    return Ok(result);
+                    return Ok(new { success = true, message = "Customers  Fetched Successfully", data = result });
                 }
                 else
                 {
-                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
+                    return Unauthorized();
                 }
             }
             catch (Exception ex)

@@ -28,12 +28,11 @@ namespace ERP.API.Controllers
 
                 if (result != null)
                 {
-                   // return Ok(new { success = true, message = "Grid Data Fetched Successfully", result });
-                    return Ok(result);
+                    return Ok(new { success = true, message = "Customers  Fetched Successfully", data = result });
                 }
                 else
                 {
-                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid Data"));
+                    return Unauthorized();
                 }
             }
             catch(Exception ex)
@@ -45,7 +44,7 @@ namespace ERP.API.Controllers
         }
 
         [HttpGet("GetUser")]
-        public async Task<IActionResult> GetUser([FromQuery] int employeeCode)
+        public async Task<IActionResult> GetUser([FromQuery] long employeeCode)
         {
             var result = await _userService.FetchUser(employeeCode);
             if(result !=null)
@@ -57,6 +56,22 @@ namespace ERP.API.Controllers
                 return Unauthorized(ApiResponseHelper.Fail<object>("Invalid User"));
             }
         }
+
+        [HttpGet("UserDet")]
+        public async Task<IActionResult> UserDet([FromQuery] long userId)
+        {
+            var result = await _userService.FetchUserDet(userId);
+            if (result != null)
+            {
+                return Ok(new { success = true, message = "Customers  Fetched Successfully", data = result });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+        }
+            
+          
 
         [HttpPost("Saveuser")]
         public async Task<IActionResult> SaveUser(EmployeeSaveDto employeeDto)
