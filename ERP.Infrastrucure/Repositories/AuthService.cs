@@ -50,7 +50,24 @@ namespace ERP.Infrastructure.Repositories
             return new AuthResponseDto 
             { 
              Token = token,
-             Email = user.email
+             Email = user.email,
+               user = new List<UserDet> // Or simply use [ ... ] if on C# 12 / .NET 8+
+                    {
+                        new UserDet
+                        {
+                            id = user.employee_pk,
+                            name = user.first_name + " " + user.last_name,
+                            designation = _context.designation_Masters
+                                .Where(y => y.designation_pk == user.designation_id)
+                                .Select(z => z.designation_name)
+                                .FirstOrDefault(),
+                            photoUrl = " ",
+                            companyName = _context.companies
+                                .Where(y => y.id == user.company_id)
+                                .Select(z => z.company_name)
+                                .FirstOrDefault()
+                        }
+                    }
             };
 
         }

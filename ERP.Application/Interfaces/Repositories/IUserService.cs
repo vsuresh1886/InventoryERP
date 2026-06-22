@@ -8,8 +8,8 @@ namespace ERP.Application.Interfaces.Repositories
     public interface IUserService
     {
         Task<GridDataResponse<EmployeeDto>> FetchGridData(UDataGridRequestDto filters);
-        Task<EmployeeDetailDto> FetchUser(int employeeCode);
-
+        Task<EmployeeDetailDto> FetchUser(long employeeCode);
+        Task<UserDetDto>  FetchUserDet(long userId);
         Task<EmployeeSaveDto> CreateUpdateUser(EmployeeSaveDto employee);
     }
 }
