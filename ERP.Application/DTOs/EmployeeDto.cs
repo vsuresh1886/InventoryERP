@@ -21,6 +21,18 @@ namespace ERP.Application.DTOs
         public string? Actions { get; set; }
     }
 
+    public class UserDetDto
+    {
+        public long id { get; set; }
+        public string? name { get; set; }
+
+        public string? designation { get; set; }
+        public string? photoUrl { get; set; }
+        public string? companyName { get; set; }
+
+    }
+    
+
     public class EmployeeDetailDto
     {
         public int Id { get; set; }
@@ -39,6 +51,7 @@ namespace ERP.Application.DTOs
         public string? state { get; set; }
         public string? country { get; set; }
         public string? status { get; set; }
+        public string? companyName { get; set; }
     }
 
     public class EmployeeSaveDto

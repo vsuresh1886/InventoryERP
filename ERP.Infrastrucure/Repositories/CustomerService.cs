@@ -109,7 +109,7 @@ namespace ERP.Infrastructure.Repositories
                     customername = x.em.customer_name.Trim(),
                     phone = x.em.phone,
                     email = x.em.email,
-                    status = x.em.status,
+                    status = x.em.status == "1"? "Active":"InActive",
                     country = x.dm.country_name,
                     partytype = x.dsm.type_name,
                     Actions = ""
