@@ -5,17 +5,24 @@ using ERP.Application.DTOs.SalesInvoice;
 using ERP.Application.Interfaces.Repositories;
 using ERP.Application.Interfaces.Repositories.CodeGenerator;
 using ERP.Application.Interfaces.Repositories.Common;
+using ERP.Application.Models.common;
 using ERP.Application.Models.Quotation;
 using ERP.Domain.Entities.Quotation;
+using ERP.Infrastructure.Document.Documents;
+using ERP.Infrastructure.Document.Helpers;
 using ERP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Trace;
+using QuestPDF.Fluent;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Security.Cryptography;
 using System.Text;
-using System.Globalization;
+using System.Threading.Tasks.Dataflow;
+using System.Xml.Linq;
+using Twilio.TwiML.Voice;
 
 namespace ERP.Infrastructure.Repositories
 {
@@ -65,7 +72,7 @@ namespace ERP.Infrastructure.Repositories
                         ValidUntil = y.quotation_date.AddDays(y.validity),
                         CustomerId = y.party_id,
                         Salesperson = y.salesperson,
-                        Status = y.status == 1 ? "Draft": y.status == 2 ? "Approved" : "Rejected",
+                        Status = y.status,
                         VatTotal = y.tax_amount,
                        Subtotal=y.sub_total,
                        GrandTotal = y.total_amount,
@@ -104,8 +111,9 @@ namespace ERP.Infrastructure.Repositories
                 var query = from q in _context.quotations
                             join p in _context.customers on q.party_id equals p.cust_pk
                             join e in _context.employees on q.salesperson equals e.employee_pk
+                            join s in _context.ddlookups on q.status equals s.id
                           //  join il in _context.quotationsLines on q.id equals il.quotation_id
-                            select new { q, p, e };
+                            select new { q, p, e ,s};
 
 
 
@@ -174,7 +182,7 @@ namespace ERP.Infrastructure.Repositories
                     salesperson = x.e.first_name + ' ' + x.e.last_name,
                     validfrom = x.q.quotation_date,
                     validto = x.q.quotation_date.AddDays(x.q.validity),
-                    status = x.q.status == 1 ? "Draft" : x.q.status == 2 ? "Approved" : "Rejected",
+                    status = x.s.value,
                     totalItems = _context.quotationsLines.Count(y=>y.quotation_id == x.q.id),
                     amount = x.q.total_amount ,
                     actions = "",
@@ -248,7 +256,7 @@ namespace ERP.Infrastructure.Repositories
                         party_id = quotationDto.CustomerId,
                         salesperson = quotationDto.Salesperson,
                         validity = 30,
-                        status =quotationDto.Status == "Draft"? 1 : quotationDto.Status == "Approved"? 2 : 3,
+                        status =quotationDto.Status ,
                         sub_total = quotationDto.Subtotal,
                         tax_amount = quotationDto.VatTotal,
                         total_amount = quotationDto.GrandTotal,
@@ -286,7 +294,7 @@ namespace ERP.Infrastructure.Repositories
                     quothead.party_id = quotationDto.CustomerId;
                     quothead.salesperson = quotationDto.Salesperson;
                     quothead.validity = 30;
-                    quothead.status = quotationDto.Status == "Draft" ? 1 : quotationDto.Status == "Approved" ? 2 : 3;
+                    quothead.status = quotationDto.Status;
                     quothead.sub_total = quotationDto.Subtotal;
                     quothead.tax_amount = quotationDto.VatTotal;
                     quothead.total_amount = quotationDto.GrandTotal;
@@ -388,7 +396,8 @@ namespace ERP.Infrastructure.Repositories
                             partname = _context.itemmasters.Where(t=>t.id == litem.item_id).Select(v=>v.name).FirstOrDefault(),
                             quantity = (int)litem.quantity,
                             unitprice = litem.unit_price,
-                            //VatPct = litem.tax,
+                            vatamt = (litem.unit_price * (int)litem.quantity) * (1 * (litem.tax/100)) ,
+                            vatper = litem.tax.ToString() + "%",
                             totalprice = litem.line_total,
 
                         }).ToList()
@@ -402,6 +411,118 @@ namespace ERP.Infrastructure.Repositories
                 throw ex;
             }
         }
+        public async Task<byte[]> quotationpdfdata_new(int id)
+        {
+            try
+            {
+                var result = await ( from q in _context.quotations
+                                     join comp in _context.companies on q.company_id equals comp.id
+                                     join cust in _context.customers on q.party_id equals cust.cust_pk
+                                     
+                                     where q.id == id
+                    select new QuotationModel
+                    {
+                        companyname = comp.company_name,
+                        companyaddress = comp.address_line1 + ", " + comp.address_line2 + ", " + comp.city + " "+ comp.state,
+                        companyphone = comp.phone,
+                        companymail = comp.email,
+                        gstin = comp.gstin,
+                        quotationno = q.quotation_no,
+                        quotationdate = q.quotation_date,
+                        validity = q.validity.ToString(),
+                        customername = cust.company_name, 
+                        customeraddress = cust.address_line1 + ", " + cust.address_line2 + " " + cust.city + ", " + cust.state , 
+                        contactperson = cust.customer_name,
+                        contact = cust.mobile,
+                        subtotal = q.sub_total,
+                        total = q.total_amount,
+                        discount = q.discount_amount,
+                        gst = q.tax_amount,
+                        
+                        items = _context.quotationsLines.Where(z => z.quotation_id == q.id).Select(litem => new QuotationItems
+                        {
 
+                            partno = _context.itemattributes.Where(t => t.attribute_name == "part_number" && t.item_id == litem.item_id).Select(v => v.attribute_value).FirstOrDefault(),
+                            partname = _context.itemmasters.Where(t => t.id == litem.item_id).Select(v => v.name).FirstOrDefault(),
+                            quantity = (int)litem.quantity,
+                            unitprice = litem.unit_price,
+                            vatamt = (litem.unit_price * (int)litem.quantity) * (1 * (litem.tax / 100)),
+                            vatper = litem.tax.ToString() + "%",
+                            totalprice = litem.line_total,
+
+                        }).ToList()
+                    }
+                    ).FirstOrDefaultAsync();
+
+
+                var model = new TaxDocumentModel
+                {
+                    IsGstApplicable = false,
+                    Header = new DocumentHeaderInfo
+                    {
+                        Kind = DocumentKind.Quotation,
+                        CompanyName = result.companyname,
+                        CompanyAddress = result.companyaddress,
+                        CompanyPhone = result.companyphone,
+                        CompanyEmail = result.companymail,
+                        Gstin =result.gstin,
+                        DocumentNo = result.quotationno,
+                        DocumentDate = result.quotationdate,
+                        ValidUntilOrDueDate = result.quotationdate.AddDays(30),
+                        PlaceOfSupply = " ",
+
+                        PartyLabel = "Quote To",
+                        PartyName = result.customername,
+                        PartyAddress = result.customeraddress,
+
+                        SecondPartyLabel = "Ship To :" + result.customername,
+                        SecondPartyAddress = result.customeraddress,
+                    },
+
+                    Items = result.items.Select(x=>new DocumentLineItem
+                    {
+                        PartName = x.partname,
+                        HsnSac = x.partno,
+                        Quantity = x.quantity,
+                        UnitPrice = x.unitprice,
+                        TaxableValue = x.unitprice * x.quantity,
+                        CgstAmount = Math.Round(x.vatamt / 2,2),
+                        CgstRate = 9,
+                        SgstAmount = Math.Round(x.vatamt / 2, 2),
+                        SgstRate = 9,
+                        TotalAmount = x.totalprice
+                    }).ToList(),
+
+                    Summary = new DocumentSummary
+                    {
+                        SubTotal = result.subtotal,
+                        TotalTax = result.gst,
+                        GrandTotal = result.total,
+                        AmountInWords = AmountToWordsConverter.Convert(result.total, "INR")
+                    },
+
+                    Bank = new BankDetails
+                    {
+                        AccountHolderName = "Anu Tech Solutions",
+                        BankName = "State Bank of India",
+                        AccountNumber = "xxxxxxxxxxxxx",
+                        BranchName = "Madurai-pudhur",
+                        IfscCode = "SBIN000XXXX"
+                    },
+
+                    Notes = "60 percentage against PO"
+                };
+
+
+                var document = new QuotationDocument(model);
+                byte[] pdfprint = document.GeneratePdf();
+                return pdfprint;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Fetch quotation by id  error: " + ex.Message);
+                throw ex;
+            }
+        }
     }
 }

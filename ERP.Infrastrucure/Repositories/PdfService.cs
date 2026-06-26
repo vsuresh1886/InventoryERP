@@ -20,7 +20,7 @@ namespace ERP.Infrastructure.Repositories
 
         public byte[] GenerateQuotationPdf(QuotationModel model)
         {
-            var document = new QuotationDocument(model);
+            var document = new TemplateDocument(model);
             return document.GeneratePdf();
         }
 

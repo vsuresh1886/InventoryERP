@@ -244,5 +244,89 @@ namespace ERP.Infrastructure.Repositories
                 throw ex;
             }
         }
+
+        public async Task<List<DropdownDto>> CreateUpdateCustomerT(CustomerDto customer)
+        {
+            try
+            {
+                using var transaction = await _context.Database.BeginTransactionAsync();
+
+                customer_master custom;
+
+                // 🔹 CREATE
+                if (string.IsNullOrEmpty(customer.customer_code))
+                {
+                    // 🔥 Generate unique code
+                    var gencode = await _context.party_Types.Where(x => x.id == customer.partytype).Select(x => x.type_name).FirstOrDefaultAsync();
+
+                    if (!string.IsNullOrEmpty(gencode)) { } else { gencode = "Customer"; }
+
+                    string customercode;
+                    do
+                    {
+                        customercode = await _codegenerator.GenerateAsync(gencode);
+                    }
+                    while (await _context.customers.AnyAsync(x => x.customer_code == customercode));
+
+                    customer.customer_code = customercode;
+
+                    custom = new customer_master
+                    {
+                        customer_code = customer.customer_code
+                    };
+
+                    _context.customers.Add(custom);
+                }
+                // 🔹 UPDATE
+                else
+                {
+                    custom = await _context.customers.FirstOrDefaultAsync(x => x.customer_code == customer.customer_code);
+
+                    if (custom == null)
+                        throw new Exception("customer not found");
+
+                    // ❗ DO NOT create new object here
+                }
+
+                // 🔥 COMMON FIELD MAPPING
+                custom.customer_name = customer.customer_name;
+                custom.company_name = customer.customer_name;
+                custom.email = customer.email;
+                custom.phone = customer.mobile;
+                custom.mobile = customer.mobile;
+                custom.address_line1 = customer.address_line1;
+                custom.address_line2 = customer.address_line2;
+                custom.city = customer.city;
+                custom.state = customer.state;
+                custom.country = customer.country;
+                custom.postal_code = customer.postal_code;
+                custom.tax_id = customer.tax_id;
+                custom.credit_limit = customer.credit_limit;
+                custom.payment_terms = customer.payment_terms;
+                custom.website = customer.website;
+                custom.partytype = customer.partytype;
+                customer.created_at = DateTime.UtcNow;
+                custom.status = customer.status;
+
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                var result = await _context.customers.Where(x=>x.partytype==customer.partytype).Select(x => new DropdownDto
+                {
+                    Id = x.cust_pk,//pk as id here
+                    Name = x.company_name
+                }).ToListAsync();
+
+
+
+                return result ?? null;
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
     }
 }

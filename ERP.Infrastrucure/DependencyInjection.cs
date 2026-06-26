@@ -78,6 +78,7 @@ namespace ERP.Infrastrucure
             services.AddScoped<IOutstandingService, OutstandingService>();
             services.AddScoped<ISalesReturnService, SalesReturnService>();
             services.AddScoped<IPurchaseOrderSerice, PurchaseOrderService>();
+            services.AddScoped<IGRNService, GRNService>();
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<ICurrentTenantService, CurrentTenantService>();
             services.AddScoped<ISignupService, SignupService>();

@@ -63,6 +63,15 @@ namespace ERP.API.Controllers
                 return Ok(result);
             return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Customer"));
         }
+        [HttpPost("CustomerTemp")]
+        public async Task<IActionResult> CreateUpdateCustomerT([FromBody] CustomerDto customer)
+        {
+            var result = await _customerservice.CreateUpdateCustomerT(customer);
+            if (result != null)
+                return Ok(result);
+            return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Customer"));
+        }
+
 
     }
 }

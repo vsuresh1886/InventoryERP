@@ -5,6 +5,7 @@ using ERP.Domain.Entities;
 using ERP.Domain.Entities.Accounts;
 using ERP.Domain.Entities.CodeGenerators;
 using ERP.Domain.Entities.Company;
+using ERP.Domain.Entities.GoodsReceiptNote;
 using ERP.Domain.Entities.Inventory;
 using ERP.Domain.Entities.PurchaseOrder;
 using ERP.Domain.Entities.Quotation;
@@ -79,6 +80,9 @@ namespace ERP.Infrastructure.Persistence
 
         public DbSet<PurchaseOrderHeader> purchaseorderheaders { get; set; }
         public DbSet<purchaseOrderDetail> purchaseOrderDetails { get; set; }
+
+        public DbSet<goodsreceiptheader> goodsreceiptheaders { get; set; }
+        public DbSet<goodsreceiptdetail> goodsreceiptdetails { get; set; }
 
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)

@@ -46,7 +46,7 @@ namespace ERP.Application.DTOs
         public string? address_line2 { get; set; }
         public string? city { get; set; }
         public string? state { get; set; }
-        public int country { get; set; }
+        public int country { get; set; } = 1;
         public string? postal_code { get; set; }
         public string? tax_id { get; set; }
         public decimal credit_limit { get; set; }
@@ -58,6 +58,14 @@ namespace ERP.Application.DTOs
         public DateTime updated_at { get; set; }
     }
 
+    public class CustomerTempDto
+    {
+        public string? customer_name { get; set; }
+        public string? mobile { get; set; }
+        public string? address_line1 { get; set; }
 
+        public int partytype { get; set; }
+
+    }
 
 }

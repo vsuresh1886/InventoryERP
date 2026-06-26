@@ -11,5 +11,6 @@ namespace ERP.Application.Interfaces.Repositories
         Task<CustomerDto> FetchCustomer(int CustomerCode);
 
         Task<CustomerDto> CreateUpdateCustomer(CustomerDto Customer);
+        Task<List<DropdownDto>> CreateUpdateCustomerT(CustomerDto Customer);
     }
 }

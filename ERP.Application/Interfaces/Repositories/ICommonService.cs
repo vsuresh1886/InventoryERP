@@ -22,6 +22,7 @@ namespace ERP.Application.Interfaces.Repositories
         public Task<List<DropdownDto>> FetchCustomer();
         public Task<List<DropdownDto>> FetchSalesperson();
         public Task<List<DropdownItemsDto>> FetchInvItems();
+        public Task<List<DropdownDto>> getwarehouse();
 
 
     }
