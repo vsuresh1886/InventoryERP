@@ -74,5 +74,21 @@ namespace ERP.API.Controllers
         }
 
 
+        [HttpGet("getPObyvendorId")]
+        public async Task<IActionResult> getPObyvendorId(long id)
+        {
+            var result = await _purchaseOrder.getPObyvendorId(id);
+            if (result != null)
+            {
+                return Ok(new { success = true, message = "Purchase order Id's  Fetched Successfully", data = result });
+            }
+            else
+            {
+                return Unauthorized();
+            }
+
+
+        }
+
     }
 }

@@ -16,6 +16,9 @@ namespace ERP.Application.Interfaces.Repositories
 
         Task<QuotationDto> getQuotationbyid(string id);
 
-        Task<QuotationModel> quotationpdfdata(int id); 
+        Task<QuotationModel> quotationpdfdata(int id);
+
+        Task<byte[]> quotationpdfdata_new(int id);
+
     } 
 }

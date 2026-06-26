@@ -364,6 +364,28 @@ namespace ERP.API.Controllers
         }
         #endregion
 
+        [HttpGet("getwarehouse")]
+        public async Task<IActionResult> getwarehouse()
+        {
+            try
+            {
+                var result = await _commonService.getwarehouse();
+                if (result != null)
+                {
+                    return Ok(new { success = true, message = "warehouse  Fetched Successfully", data = result });
+                }
+                else
+                {
+                    return Unauthorized(ApiResponseHelper.Fail<object>("Invalid Grid configuration"));
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("User error: " + ex.Message);
+                return StatusCode(500, new { success = false, message = "Internal server error", error = ex.Message });
+
+            }
+        }
 
     }
 }

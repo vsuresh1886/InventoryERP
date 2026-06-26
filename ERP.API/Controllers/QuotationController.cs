@@ -102,8 +102,8 @@ namespace ERP.API.Controllers
         [HttpGet("{id}/pdf")]
         public async Task<IActionResult> getPdf(int id)
         {
-            var model = await _quotationService.quotationpdfdata(id);
-            var pdf =  _pdfservice.GenerateQuotationPdf(model);
+            var pdf = await _quotationService.quotationpdfdata_new(id);
+            //var pdf =  _pdfservice.GenerateQuotationPdf(model);
             return File(pdf, "application/pdf", $"Quotation1.pdf");
         }
        
