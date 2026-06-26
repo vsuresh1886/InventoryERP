@@ -18,7 +18,7 @@ namespace ERP.Application.DTOs.Quotation
 
         public DateTime? ValidUntil { get; set; }
 
-        public string Status { get; set; } = "Draft";
+        public int Status { get; set; } 
 
         public decimal Discount { get; set; }
 

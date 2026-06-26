@@ -8,6 +8,8 @@ namespace ERP.Application.Models.Quotation
     {
         public string companyname { get; set;}
         public string companyaddress { get; set; }
+        public string companyphone { get; set; }
+        public string companymail { get; set; }
         public string gstin { get; set; }
 
 
@@ -28,6 +30,8 @@ namespace ERP.Application.Models.Quotation
         public decimal discount { get; set; }
         public decimal total { get; set; }
 
+        public string notes { get; set; }
+
 
     }
 
@@ -38,6 +42,8 @@ namespace ERP.Application.Models.Quotation
         public string partname { get; set; }
         public int quantity { get; set; }
         public decimal unitprice { get; set; }
+        public decimal vatamt { get; set; }
+        public string vatper { get; set; }
         public decimal totalprice { get; set; }
     }
 

@@ -156,6 +156,11 @@ namespace ERP.Infrastructure.Repositories.CodeGeneratorservice
         }
         public async Task<string> GenerateAsync(string moduleName, long? explicitCompanyId = null)
         {
+            if (_currentTenantService == null)
+            {
+                throw new InvalidOperationException("Tenant service context is not initialized via Dependency Injection.");
+            }
+
             // Fallback company ID context determination
             long targetCompanyId = explicitCompanyId ?? (long)_currentTenantService.CompanyId;
 

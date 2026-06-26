@@ -1,4 +1,5 @@
-﻿using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+﻿using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using DocumentFormat.OpenXml.Presentation;
 using ERP.Application.DTOs;
 using ERP.Application.DTOs.Purchase;
@@ -48,6 +49,28 @@ namespace ERP.Infrastructure.Repositories
             }
         }
 
+
+       public async  Task<List<DropdownDto>> getPObyvendorId(long id)
+        {
+            try
+            {
+                var targetStatuses = new List<string> { "APPROVED", "PARTIALLYRECEIVED" };
+                var stats = await _context.ddlookups.Where(x => x.lookup_type == "PO_STATUS" && targetStatuses.Contains(x.code)).Select(Z => Z.id).ToListAsync();
+                var result = await _context.purchaseorderheaders.Where(y=>y.vendor_id == id && stats.Contains(y.status)).Select(x => new DropdownDto
+                {
+                    Id = (int)x.po_id,//pk as id here
+                    Name = x.po_no
+                }).ToListAsync();
+
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+        }
 
         public async Task<GridDataResponse<PurchaseOrderGridDto>> GetPurchaseOrderGrid( PurchaseGridRequestDto filters)
         {
@@ -344,13 +367,15 @@ namespace ERP.Infrastructure.Repositories
             await _context.SaveChangesAsync();
 
             var existingLines =
-                await _context.sales_Return_Details
+                await _context.purchaseOrderDetails
                     .Where(x =>
-                        x.sales_return_id == dto.poId)
+                        x.po_id == dto.poId)
                     .ToListAsync();
 
-            _context.sales_Return_Details
+            _context.purchaseOrderDetails
                 .RemoveRange(existingLines);
+
+            await _context.SaveChangesAsync();
 
             var newLines =
                 dto.LineItems.Select(x =>
@@ -463,6 +488,9 @@ namespace ERP.Infrastructure.Repositories
                 throw;
             }
         }
+
+
+       
 
     }
 }

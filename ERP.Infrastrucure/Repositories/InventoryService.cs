@@ -478,8 +478,11 @@ namespace ERP.Infrastructure.Repositories
 
                     transaction_date = DateTime.UtcNow,
 
+                    warehouse_id = 1,
+
                     created_at = DateTime.UtcNow,
                     created_by = 1 //(int)_currentuser.UserId
+                    
                 });
 
                  _InvDbContext.inventoryTransactions.AddRange(transactions);

@@ -351,6 +351,25 @@ namespace ERP.Infrastructure.Repositories
             }
         }
 
+        public async Task<List<DropdownDto>> getwarehouse()
+        {
+            try
+            {
+                var result = await _context.warehouses.Select(x => new DropdownDto
+                {
+                    Id = (int)x.id,//pk as id here
+                    Name = x.name
+                }).ToListAsync();
+
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
 
     }
 }
