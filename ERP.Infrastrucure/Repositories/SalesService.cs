@@ -252,6 +252,9 @@ namespace ERP.Infrastructure.Repositories
                         remarks = InvDto.Remarks,
                         created_at = DateTime.UtcNow,
                         created_by = (int)_currentuser.UserId,
+                        due_date = InvDto.ValidUntil != null
+                            ? DateTime.SpecifyKind(InvDto.ValidUntil, DateTimeKind.Utc)
+                            : DateTime.UtcNow
                     };
                     _context.invoiceHeaders.Add(Invhead);
                     await _context.SaveChangesAsync();
@@ -318,6 +321,7 @@ namespace ERP.Infrastructure.Repositories
                     Invhead.remarks = InvDto.Remarks;
                     Invhead.updated_at = DateTime.UtcNow;
                     Invhead.updated_by = (int)_currentuser.UserId;
+                    Invhead.due_date = InvDto.ValidUntil != null ? DateTime.SpecifyKind(InvDto.ValidUntil, DateTimeKind.Utc): DateTime.UtcNow;
                     await _context.SaveChangesAsync();
 
 
@@ -453,6 +457,9 @@ namespace ERP.Infrastructure.Repositories
                 reference_type = "SALE",
                 reference_id = invoiceId,
 
+                quantity_in = 0,
+                quantity_out = item.Quantity,
+
                 remarks = $"Invoice {invoiceNo}",
                 created_at = DateTime.UtcNow,
                 created_by = (int)_currentuser.UserId
@@ -479,6 +486,9 @@ namespace ERP.Infrastructure.Repositories
                 unit_price = txn.unit_price,
                 total_amount = txn.total_amount,
                 transaction_date = DateTime.UtcNow,
+
+                quantity_in = txn.quantity,
+                quantity_out = 0,
 
                 reference_type = "SALE_RETURN",
                 reference_id = invoiceId,
@@ -508,13 +518,21 @@ namespace ERP.Infrastructure.Repositories
 
             foreach (var item in groupedItems)
             {
+              
+
+                var inQty = await _context.inventoryTransactions
+                        .Where(t => t.item_id == item.ItemId && t.transaction_type == "IN")
+                        .SumAsync(t => t.quantity ?? 0);
+
+
                 var availableStock = await _context.inventoryTransactions
-                    .Where(t => t.item_id == item.ItemId)
-                    .SumAsync(t =>
-                        t.transaction_type == "IN" ? t.quantity :
-                        t.transaction_type == "OUT" ? -t.quantity :
-                        0
-                    );
+                         .Where(t => t.item_id == item.ItemId)
+                         .SumAsync(t =>
+                             t.transaction_type == "IN"
+                                 ? (t.quantity ?? 0)
+                                 : t.transaction_type == "OUT"
+                                     ? -(t.quantity ?? 0)
+                                     : 0);
 
                 // 🔥 If already confirmed before → add back old qty (because we will reverse)
                 if (oldStatus == StatusIds.Confirm)
@@ -525,7 +543,7 @@ namespace ERP.Infrastructure.Repositories
                                  && t.item_id == item.ItemId)
                         .SumAsync(t => t.quantity);
 
-                    availableStock += oldQty;
+                    availableStock += (decimal)oldQty;
                 }
 
                 if (availableStock < item.RequiredQty)
