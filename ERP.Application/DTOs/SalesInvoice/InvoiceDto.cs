@@ -21,7 +21,7 @@ namespace ERP.Application.DTOs.SalesInvoice
 
         public DateTime? ValidUntil { get; set; }
 
-        public string Status { get; set; } = "Draft";
+        public long Status { get; set; } 
 
         public decimal Discount { get; set; }
 
