@@ -101,7 +101,7 @@ namespace ERP.Infrastructure.Repositories
 
                     if (!string.IsNullOrWhiteSpace(filters.dateto))
                     {
-                        dateto = DateTimeOffset.Parse(filters.dateto).UtcDateTime;
+                        dateto = DateTimeOffset.Parse(filters.dateto).UtcDateTime.AddDays(1);
                     }
                     else
                     {
