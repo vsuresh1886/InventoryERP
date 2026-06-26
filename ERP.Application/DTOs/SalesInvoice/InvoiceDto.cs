@@ -19,7 +19,7 @@ namespace ERP.Application.DTOs.SalesInvoice
 
         public DateTime invoiceDate { get; set; }
 
-        public DateTime? ValidUntil { get; set; }
+        public DateTime ValidUntil { get; set; }
 
         public long Status { get; set; } = 0;
 
@@ -43,7 +43,7 @@ namespace ERP.Application.DTOs.SalesInvoice
 
         public long invoice_id { get; set; }
 
-        public long ItemId { get; set; } // 🔴 REQUIRED for DB
+        public long ItemId { get; set; } 
 
         // UI support fields (optional)
         public string? PartNo { get; set; }

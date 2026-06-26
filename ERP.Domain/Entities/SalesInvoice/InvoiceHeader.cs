@@ -32,6 +32,7 @@ namespace ERP.Domain.Entities.SalesInvoice
             public decimal  balance_amount { get; set; }
             public decimal paid_amount { get; set; }
             public int payment_status { get; set; }
+            public DateTime due_date { get; set; }
             public long? company_id { get; set; }
         }
 }
