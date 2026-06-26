@@ -59,8 +59,9 @@ namespace ERP.Infrastructure.Repositories
                 var query = from q in _context.invoiceHeaders
                             join p in _context.customers on q.party_id equals p.cust_pk
                             join e in _context.employees on q.salesperson equals e.employee_pk
+                            join s in _context.ddlookups on q.status equals s.id
                             //  join il in _context.quotationsLines on q.id equals il.quotation_id
-                            select new { q, p, e };
+                            select new { q, p, e, s };
 
 
 
@@ -100,7 +101,7 @@ namespace ERP.Infrastructure.Repositories
 
                     if (!string.IsNullOrWhiteSpace(filters.dateto))
                     {
-                        dateto = DateTimeOffset.Parse(filters.dateto).UtcDateTime;
+                        dateto = DateTimeOffset.Parse(filters.dateto).UtcDateTime.AddDays(1);
                     }
                     else
                     {
@@ -127,7 +128,7 @@ namespace ERP.Infrastructure.Repositories
                     salesperson = x.e.first_name + ' ' + x.e.last_name,
                     validfrom = x.q.invoice_date,
                     //validto = x.q.invoice.AddDays(x.q.validity),
-                    status = x.q.status == 1 ? "Draft" : x.q.status == 2 ? "Confirmed" : "Rejected",
+                    status = x.s.value,
                     totalItems = _context.invoicelines.Count(y => y.invoice_id == x.q.id),
                     amount = x.q.total_amount,
                     actions = "",
@@ -160,7 +161,7 @@ namespace ERP.Infrastructure.Repositories
                         ValidUntil = y.invoice_date,
                         CustomerId = y.party_id,
                         Salesperson = y.salesperson,
-                        Status = y.status == 1 ? "Draft" : y.status == 2 ? "Confirm" : "Rejected",
+                        Status = y.status ,
                         VatTotal = y.tax_amount,
                         Subtotal = y.sub_total,
                         GrandTotal = y.total_amount,
@@ -229,7 +230,7 @@ namespace ERP.Infrastructure.Repositories
                     {
                         quotno = await _codeGeneratorservice.GenerateAsync("Invoice");
                     }
-                    while (await _context.quotations.AnyAsync(x => x.quotation_no == quotno));
+                    while (await _context.invoiceHeaders.AnyAsync(x => x.invoice_no == quotno));
 
                     InvDto.invoiceNo = quotno;
 
@@ -242,7 +243,7 @@ namespace ERP.Infrastructure.Repositories
                         party_id = InvDto.CustomerId,
                         salesperson = InvDto.Salesperson,
                         validity = 30,
-                        status = InvDto.Status == "Draft" ? 1 : InvDto.Status == "Confirm" ? 2 : 3,
+                        status = (int)InvDto.Status,
                         sub_total = InvDto.Subtotal,
                         tax_amount = InvDto.VatTotal,
                         total_amount = InvDto.GrandTotal,
@@ -273,10 +274,10 @@ namespace ERP.Infrastructure.Repositories
 
                     await _context.SaveChangesAsync();
 
-                    var oldStatus = 0; // assume draft (no previous state)
+                    var oldStatus = StatusIds.Draft; // assume draft (no previous state)
                     var newStatus = Invhead.status; //during creation
                    //check the stock availablity before update the transaction
-                    if (newStatus == 2)
+                    if (newStatus == StatusIds.Confirm)
                     {
                         await ValidateStockAvailability(
                                    0, // no previous invoice
@@ -303,12 +304,12 @@ namespace ERP.Infrastructure.Repositories
                     if (Invhead == null)
                         throw new Exception("Invalid Invoice");
                     var oldStatus = Invhead.status;
-                    var newStatus = InvDto.Status == "Draft" ? 1 : InvDto.Status == "Confirm" ? 2 : 3;
+                    var newStatus = InvDto.Status;
                     Invhead.quotation_id = InvDto.quotationid ?? 0;
                     Invhead.party_id = InvDto.CustomerId;
                     Invhead.salesperson = InvDto.Salesperson;
                     Invhead.validity = 30;
-                    Invhead.status = newStatus;//InvDto.Status == "Draft" ? 1 : InvDto.Status == "Confirm" ? 2 : 3;
+                    Invhead.status = (int)newStatus;//InvDto.Status == "Draft" ? 1 : InvDto.Status == "Confirm" ? 2 : 3;
                     Invhead.sub_total = InvDto.Subtotal;
                     Invhead.tax_amount = InvDto.VatTotal;
                     Invhead.total_amount = InvDto.GrandTotal;
@@ -370,7 +371,7 @@ namespace ERP.Infrastructure.Repositories
                         }
                     }
 
-                    if (newStatus == 2)
+                    if (newStatus == StatusIds.Confirm)
                     {
                         await ValidateStockAvailability(
                             Invhead.id,
@@ -382,7 +383,7 @@ namespace ERP.Infrastructure.Repositories
                             Invhead.id,
                             Invhead.invoice_no,
                             oldStatus,
-                            newStatus,
+                            (int)newStatus,
                             InvDto.LineItems!
                         );
 
@@ -413,14 +414,14 @@ namespace ERP.Infrastructure.Repositories
                                         List<InvoiceLineItemDto> items)
             {
             // Draft -> Confirm
-            if (oldStatus != 2 && newStatus == 2)
+            if (oldStatus != StatusIds.Confirm && newStatus == StatusIds.Confirm)
             {
                 await PostSaleTransactions(invoiceId, invoiceNo, items);
                 return;
             }
 
             // Confirm -> Confirm (edit)
-            if (oldStatus == 2 && newStatus == 2)
+            if (oldStatus == StatusIds.Confirm && newStatus == StatusIds.Confirm)
             {
                 await ReverseSaleTransactions(invoiceId, "Reversal due to edit");
                 await PostSaleTransactions(invoiceId, invoiceNo, items);
@@ -428,7 +429,7 @@ namespace ERP.Infrastructure.Repositories
             }
 
             // Confirm -> Cancel
-            if (oldStatus == 2 && newStatus == 3)
+            if (oldStatus == StatusIds.Confirm && newStatus == StatusIds.Cancel)
             {
                 await ReverseSaleTransactions(invoiceId, "Reversal due to cancel");
                 return;
@@ -516,7 +517,7 @@ namespace ERP.Infrastructure.Repositories
                     );
 
                 // 🔥 If already confirmed before → add back old qty (because we will reverse)
-                if (oldStatus == 2)
+                if (oldStatus == StatusIds.Confirm)
                 {
                     var oldQty = await _context.inventoryTransactions
                         .Where(t => t.reference_type == "SALE"
@@ -535,6 +536,14 @@ namespace ERP.Infrastructure.Repositories
                     );
                 }
             }
+        }
+        public static class StatusIds
+        {
+            public const int Draft = 10;
+
+            public const int Confirm = 11;
+
+            public const int Cancel = 12;
         }
 
     }
