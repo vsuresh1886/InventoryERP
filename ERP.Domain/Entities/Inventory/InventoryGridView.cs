@@ -33,6 +33,10 @@ namespace ERP.Domain.Entities.Inventory
             public decimal? last_purchase_price { get; set; }
             public decimal? unit_price { get; set; }
             public long? company_id { get; set; }
+            public DateTime? last_in_date { get; set; }
+            public DateTime? last_out_date { get; set; }
+
+
         }
 
     

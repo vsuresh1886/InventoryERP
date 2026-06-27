@@ -82,6 +82,7 @@ namespace ERP.Infrastrucure
             services.AddScoped<IPasswordService, PasswordService>();
             services.AddScoped<ICurrentTenantService, CurrentTenantService>();
             services.AddScoped<ISignupService, SignupService>();
+            services.AddScoped<IDashboardService, DashboardService>();
             // Register Services End
 
             return services;

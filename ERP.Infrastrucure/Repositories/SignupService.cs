@@ -5,6 +5,7 @@ using ERP.Application.Interfaces.Repositories.CodeGenerator;
 using ERP.Application.Interfaces.Repositories.Common;
 using ERP.Domain.Entities;
 using ERP.Domain.Entities.Company;
+using ERP.Domain.Entities.Inventory;
 using ERP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -65,7 +66,9 @@ namespace ERP.Infrastructure.Repositories
                     country = dtos.country,
                     phone = dtos.phone,
                     is_active = true,
-                    created_at = DateTime.UtcNow
+                    created_at = DateTime.UtcNow,
+                    short_name = string.Join("", dtos.companyName.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                              .Select(word => word[0])),
                 };
 
                 _context.companies.Add(newCompany);
@@ -102,6 +105,103 @@ namespace ERP.Infrastructure.Repositories
 
                 _context.UserRoles.Add(userroles);
                 await _context.SaveChangesAsync();
+
+                // create the master data for the new company
+
+                // A. Create & Add your Core Domain Masters
+                var sparePartsDomain = new Domainmaster
+                {
+                    company_id = newCompany.id,
+                    code = "SPT",
+                    name = "Spare Parts",
+                    description = "Automotive and mechanical replacement components",
+                    is_active = true,
+                    created_at = DateTime.UtcNow
+                };
+
+                var solarDomain = new Domainmaster
+                {
+                    company_id = newCompany.id,
+                    code = "SLR",
+                    name = "Solar",
+                    description = "Renewable energy equipment, brackets, and solar components",
+                    is_active = true,
+                    created_at = DateTime.UtcNow
+                };
+
+                var generalDomain = new Domainmaster
+                {
+                    company_id = newCompany.id,
+                    code = "GEN",
+                    name = "General",
+                    description = "General operational miscellaneous assets",
+                    is_active = true,
+                    created_at = DateTime.UtcNow
+                };
+
+                _context.domainmasters.Add(sparePartsDomain);
+                _context.domainmasters.Add(solarDomain);
+                _context.domainmasters.Add(generalDomain);
+                await _context.SaveChangesAsync(); // Saves here to populate the Domain IDs
+
+                // B. Create & Add the specified Category Masters (Mapping them to their correct Domains)
+                var hardwareCategory = new Categorymaster
+                {
+                    company_id = newCompany.id,
+                    domain_id = sparePartsDomain.id, // 👈 Maps Hardware under Spare Parts
+                    code = "HWD",
+                    name = "Hardware",
+                    description = "Mechanical fastenings, tools, and hardware kits",
+                    is_active = true,
+                    created_at = DateTime.UtcNow
+                };
+
+                var electricalCategory = new Categorymaster
+                {
+                    company_id = newCompany.id,
+                    domain_id = sparePartsDomain.id, // 👈 Maps Electrical under Spare Parts (or General)
+                    code = "ELE",
+                    name = "Electrical",
+                    description = "Switches, wiring harness modules, and fuses",
+                    is_active = true,
+                    created_at = DateTime.UtcNow
+                };
+
+                var solarPanelsCategory = new Categorymaster
+                {
+                    company_id = newCompany.id,
+                    domain_id = solarDomain.id, // 👈 Maps Solar Panels cleanly under the Solar Domain
+                    code = "PNL",
+                    name = "Solar Panels",
+                    description = "Monocrystalline, Polycrystalline arrays, and cells",
+                    is_active = true,
+                    created_at = DateTime.UtcNow
+                };
+
+                _context.categorymasters.Add(hardwareCategory);
+                _context.categorymasters.Add(electricalCategory);
+                _context.categorymasters.Add(solarPanelsCategory);
+                await _context.SaveChangesAsync(); // Saves here to establish the Category IDs
+
+                // C. Create & Add default Subcategories linked to these new categories
+                var defaultSubcategories = new List<Subcategorymaster>
+                    {
+                        // Subcategories for Hardware (Hardware Category ID)
+                        new Subcategorymaster { category_id = hardwareCategory.id, code = "NTS", name = "Nut & Bolts", description = "Standard industrial fasteners", is_active = true, created_at = DateTime.UtcNow },
+    
+                        // Subcategories for Electrical (Electrical Category ID)
+                        new Subcategorymaster { category_id = electricalCategory.id, code = "WIR", name = "Cables & Wires", description = "Copper structural connections", is_active = true, created_at = DateTime.UtcNow },
+    
+                        // Subcategories for Solar Panels (Solar Panels Category ID)
+                        new Subcategorymaster { category_id = solarPanelsCategory.id, code = "INV", name = "Inverters & Regulators", description = "DC-to-AC conversion units", is_active = true, created_at = DateTime.UtcNow }
+                    };
+
+                _context.subcategories.AddRange(defaultSubcategories);
+                await _context.SaveChangesAsync();
+
+
+
+
 
                 // 5. Commit transaction if both operations completed successfully
                 await transaction.CommitAsync();

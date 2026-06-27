@@ -383,6 +383,7 @@ namespace ERP.Infrastructure.Repositories
 
                     header.receipt_no =
                         await _codegeneratorservice.GenerateAsync("Collection");
+                    header.created_by = (long)_currentuser.UserId;
 
                     _context.collectionheaders.Add(header);
                    
@@ -455,7 +456,7 @@ namespace ERP.Infrastructure.Repositories
                 header.total_amount = dto.totalAmount;
                 header.remarks = dto.remarks;
                 header.status = dto.status;
-                header.created_by =  1;
+                header.created_by = (long)_currentuser.UserId;
                 header.created_at = DateTime.SpecifyKind(dto.receiptDate, DateTimeKind.Utc);
                 await _context.SaveChangesAsync();
                 // =====================================================
@@ -570,7 +571,8 @@ namespace ERP.Infrastructure.Repositories
             try
             {
                 var stats = await _context.ddlookups.Where(y => y.lookup_type == "PAYMENT_STATUS" && y.code == "PAID").Select(z => z.id).FirstOrDefaultAsync();
-                var res= await _context.invoiceHeaders.Where(x => x.party_id == customerid && x.balance_amount > 0 && x.status == 2 && x.payment_status != stats ) 
+                var invoicestats = await _context.ddlookups.Where(y => y.lookup_type == "INVOICE_STATUS" && y.code == "CONFIRM").Select(z => z.id).FirstOrDefaultAsync();
+                var res= await _context.invoiceHeaders.Where(x => x.party_id == customerid && x.balance_amount > 0 && x.status == invoicestats && x.payment_status != stats ) 
                             .Select(x => new OutstandingInvoiceCDto
                             {
                                 Aid = 0,

@@ -1,6 +1,7 @@
 ﻿using ERP.Application.DTOs;
 using ERP.Application.Interfaces.Repositories;
 using ERP.Application.Interfaces.Repositories.CodeGenerator;
+using ERP.Application.Interfaces.Repositories.Common;
 using ERP.Domain.Entities;
 using ERP.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -14,11 +15,13 @@ namespace ERP.Infrastructure.Repositories
     {
         private readonly AppDbContext _context;
         private readonly ICodeGeneratorService _codegenerator;
-        
-        public UserService(AppDbContext context, ICodeGeneratorService codeGenerator)
+        private readonly ICurrentTenantService _tenantService;
+
+        public UserService(AppDbContext context, ICodeGeneratorService codeGenerator, ICurrentTenantService tenantService)
         {
             _context = context;
             _codegenerator = codeGenerator;
+            _tenantService = tenantService;
         }
 
         public async Task<GridDataResponse<EmployeeDto>> FetchGridData(UDataGridRequestDto filters)
@@ -165,8 +168,8 @@ namespace ERP.Infrastructure.Repositories
         {
             try
             {
-
-                var query = await _context.employees.Where(x => x.employee_pk == userId).Select(x => new UserDetDto
+                
+                var query = await _context.employees.IgnoreQueryFilters().Where(x => x.employee_pk == userId).Select(x => new UserDetDto
                 {
                     id = x.employee_pk,
                     name = x.first_name + " " + x.last_name,
