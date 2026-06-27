@@ -1,5 +1,6 @@
 ﻿using ERP.Application.DTOs;
 using ERP.Application.Interfaces.Repositories;
+using ERP.Application.Interfaces.Repositories.Common;
 using ERP.Application.Interfaces.Repositories.Notification;
 using ERP.Application.Models.Notification;
 using ERP.Domain.Entities;
@@ -16,21 +17,23 @@ namespace ERP.Infrastructure.Repositories
         private readonly AppDbContext _context;
         private readonly IPdfService _pdfservice;
         private readonly IEmailService _emailservice;
+        private readonly ICurrentTenantService _tenantService;
 
 
-        public SoaService(AppDbContext context,IPdfService pdfservice , IEmailService emailService  )
+        public SoaService(AppDbContext context,IPdfService pdfservice , IEmailService emailService , ICurrentTenantService tenantservice )
         {
             _context = context;
             _pdfservice = pdfservice;
             _emailservice = emailService;
+            _tenantService = tenantservice;
         }
         public async Task<List<CustomerSOADto>> FetchCustomer_rep(CustomerSOAFilterDto filters)
         {
             try
             {
 
-            
-            var result =
+                var companyid = _tenantService.CompanyId ?? throw new UnauthorizedAccessException("Invalid Tenant Space Context.");
+                var result =
                 await _context
                 .Set<CustomerSOARowDto>()
                 .FromSqlInterpolated($@"
@@ -41,7 +44,8 @@ namespace ERP.Infrastructure.Repositories
                         {filters.customer_ids},
                         {filters.from_date},
                         {filters.to_date},
-                        {filters.pending_only}
+                        {filters.pending_only},
+                        {companyid}
                     )
 
                 ")

@@ -2,6 +2,7 @@
 using ERP.Application.DTOs;
 using ERP.Application.DTOs.Accounts;
 using ERP.Application.Interfaces.Repositories;
+using ERP.Application.Interfaces.Repositories.Common;
 using ERP.Application.Interfaces.Repositories.Notification;
 using ERP.Application.Models.Notification;
 using ERP.Domain.Entities;
@@ -18,13 +19,17 @@ namespace ERP.Infrastructure.Repositories
         public readonly AppDbContext _context;
         public readonly IEmailService _emailService;
         public readonly IPdfService _pdfservice;
-        
+        public readonly ICurrentTenantService _tenantService;
+      
 
-        public OutstandingService(IPdfService pdfService, AppDbContext context, IEmailService emailService)
+
+
+        public OutstandingService(IPdfService pdfService, AppDbContext context, IEmailService emailService,ICurrentTenantService currenttenantservice)
         {
             _emailService = emailService;
             _pdfservice = pdfService;
             _context = context;
+            _tenantService = currenttenantservice;
         }
 
 
@@ -35,23 +40,26 @@ namespace ERP.Infrastructure.Repositories
             {
                 long[]? customerIds = filters.CustomerIds?.ToArray();
 
+                var companyid = _tenantService.CompanyId ?? throw new UnauthorizedAccessException("Invalid Tenant Space Context.");
+
                 var result = await _context
-                          .Set<ReceivableOutstandingRowDto>()
-                          .FromSqlInterpolated($@"
+                              .Set<ReceivableOutstandingRowDto>()
+                              .FromSqlInterpolated($@"
 
-                        SELECT *
-                        FROM receivable_outstanding_report
-                        (
-                            {customerIds},
-                            {filters.from_date},
-                            {filters.to_date},
-                            {filters.pending_only},
-                            {filters.overdue_only}
-                        )
+                            SELECT *
+                            FROM receivable_outstanding_report
+                            (
+                                {customerIds},
+                                {filters.from_date},
+                                {filters.to_date},
+                                {filters.pending_only},
+                                {filters.overdue_only},
+                                {companyid}
+                            )
 
-                        ")
-                          .AsNoTracking()
-                          .ToListAsync();
+                            ")
+                              .AsNoTracking()
+                          .ToListAsync();                                                           
 
                 var finalresult = result
                                 .GroupBy(x => new

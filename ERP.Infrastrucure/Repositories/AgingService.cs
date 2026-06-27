@@ -1,6 +1,7 @@
 ﻿using DocumentFormat.OpenXml.Spreadsheet;
 using ERP.Application.DTOs;
 using ERP.Application.Interfaces.Repositories;
+using ERP.Application.Interfaces.Repositories.Common;
 using ERP.Application.Interfaces.Repositories.Notification;
 using ERP.Application.Models.Notification;
 using ERP.Domain.Entities;
@@ -17,19 +18,21 @@ namespace ERP.Infrastructure.Repositories
         private readonly AppDbContext _context;
         private readonly IPdfService _pdfservice;
         private readonly IEmailService _emailservice;
+        private readonly ICurrentTenantService _tenantService;
 
-        public AgingService(AppDbContext context,IPdfService pdfService,IEmailService emailservice)
+        public AgingService(AppDbContext context,IPdfService pdfService,IEmailService emailservice,ICurrentTenantService tenantService)
         {
             _context = context;
             _pdfservice = pdfService;
             _emailservice = emailservice;
+            _tenantService = tenantService;
         }
 
        public async Task<List<CustomerAgingCustomerDto>> CustomerAging_rep(CustomerAgingFilterDto filters)
         {
             try
             {
-
+                var companyid = _tenantService.CompanyId?? throw new UnauthorizedAccessException("Invalid Tenant Space Context.");
                 var result =  await _context.Set<CustomerAgingRowDto>()
                                 .FromSqlInterpolated($@"
                                        SELECT *
@@ -37,7 +40,8 @@ namespace ERP.Infrastructure.Repositories
                                     (
                                         {filters.customer_ids},
                                         {filters.as_on_date},
-                                        {filters.pending_only}
+                                        {filters.pending_only},
+                                        {companyid}
                                     )
 
                                 ")
