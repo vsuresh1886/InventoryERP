@@ -4,6 +4,7 @@ using ERP.Infrastructure.Persistence;
 using ERP.Infrastructure.Repositories;
 using ERP.Infrastrucure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QuestPDF.Infrastructure;
@@ -28,7 +29,7 @@ builder.Services.AddCors(options =>
               //.AllowCredentials(); // only if you use cookies/auth headers
     });
 });
-
+JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 builder.Services.AddHttpContextAccessor();
 // DB context and DI's

@@ -63,7 +63,7 @@ namespace ERP.API.Controllers
             var result = await _userService.FetchUserDet(userId);
             if (result != null)
             {
-                return Ok(new { success = true, message = "Customers  Fetched Successfully", data = result });
+                return Ok(new { success = true, message = "User  Fetched Successfully", data = result });
             }
             else
             {

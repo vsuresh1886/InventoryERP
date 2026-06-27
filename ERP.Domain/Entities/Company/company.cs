@@ -21,12 +21,12 @@ namespace ERP.Domain.Entities.Company
         public string country { get; set; }
         public string email { get; set; }
         public string phone { get; set; }
-        public DateTime trial_end_date { get; set; }
+        public DateTime? trial_end_date { get; set; }
         public bool is_active { get; set; }
         public DateTime created_at { get; set; }
-        public string? legalname { get; set; }
+        public string? legal_name { get; set; }
 
-        public string? shortname { get; set; }
+        public string? short_name { get; set; }
 
         public string? address_line1 { get; set; }
 
@@ -36,48 +36,42 @@ namespace ERP.Domain.Entities.Company
 
         public string? state { get; set; }
 
-        public string? postalcode { get; set; }
+        public string? postal_code { get; set; }
 
-        public string? contactperson { get; set; }
+        public string? contact_person { get; set; }
 
-        public string? alternatephone { get; set; }
+        public string? alternate_phone { get; set; }
 
         public string? website { get; set; }
 
         public string? gstin { get; set; }
 
-        public string? panno { get; set; }
+        public string? pan_no { get; set; }
 
-        public string? cinno { get; set; }
+        public string? cin_no { get; set; }
 
-        public string? tanno { get; set; }
+        public string? tan_no { get; set; }
 
-        public string? taxregistrationtype { get; set; }
+        public string? tax_registration_type { get; set; }
 
-        public string? logopath { get; set; }
+        public string? logo_path { get; set; }
 
-        public string? faviconpath { get; set; }
+        public string? favicon_path { get; set; }
 
-        public string? currencycode { get; set; }
+        public string? currency_code { get; set; }
 
-        public string? currencysymbol { get; set; }
+        public string? currency_symbol { get; set; }
 
         public string? timezone { get; set; }
 
-        public string? languagecode { get; set; }
+        public string? language_code { get; set; }
 
-        public string? defaultdateformat { get; set; }
+        public string? default_date_format { get; set; }
 
-        public DateTime? trialenddate { get; set; }
+        public DateTime? updated_at { get; set; }
 
-        public bool isActive { get; set; }
+        public long? created_by { get; set; }
 
-        public DateTime createdat { get; set; }
-
-        public DateTime? updatedat { get; set; }
-
-        public long? createdby { get; set; }
-
-        public long? updatedby { get; set; }
+        public long? updated_by { get; set; }
     }
 }
