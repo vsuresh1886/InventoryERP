@@ -32,6 +32,7 @@ namespace ERP.Infrastructure.Persistence
         }
 
         public DbSet<company> companies { get; set; }
+        public DbSet<companybank> companybanks { get; set; }
         public DbSet<Menu> Menus { get; set; }
         public DbSet<RolePermissions> RolePermissions { get; set; }
         public DbSet<Roles> Roles { get; set; } 

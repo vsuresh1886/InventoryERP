@@ -92,5 +92,14 @@ namespace ERP.API.Controllers
                 return BadRequest("Bad Request");
             }
         }
+
+
+        [HttpGet("{id}/pdf")]
+        public async Task<IActionResult> getPdf(long id)
+        {
+            var pdf = await _salesService.Salespdfdata_new(id);
+            //var pdf =  _pdfservice.GenerateQuotationPdf(model);
+            return File(pdf, "application/pdf", $"Quotation1.pdf");
+        }
     }
 }

@@ -15,5 +15,6 @@ namespace ERP.Application.Interfaces.Repositories
         Task<InvoiceDto> getInvoiceById(long id);
 
         Task<InvoiceDto> CreateUpdateInvoice(InvoiceDto InvDto);
+        Task<byte[]> Salespdfdata_new(long id);
     }
 }

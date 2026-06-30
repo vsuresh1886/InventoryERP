@@ -219,7 +219,7 @@ namespace ERP.Infrastructure.Repositories
                 var result = await _context.unitmasters.Select(x => new DropdownDto
                 {
                     Id = (int)x.id,//pk as id here
-                    Name = x.name
+                    Name = x.code
                 }).ToListAsync();
 
 

@@ -77,7 +77,7 @@ namespace ERP.Infrastructure.Repositories
 
             // 3. Fetch Today's Daily Sales Aggregations
             var salesData = await _context.invoiceHeaders
-                .Where(s => s.company_id == currentCompanyId && s.invoice_date.Date == today && s.status != 12)
+                .Where(s => s.company_id == currentCompanyId && s.invoice_date.Date == today && s.status == 11)
                 .GroupBy(s => 1)
                 .Select(g => new
                 {
