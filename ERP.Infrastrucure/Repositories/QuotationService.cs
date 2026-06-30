@@ -7,6 +7,7 @@ using ERP.Application.Interfaces.Repositories.CodeGenerator;
 using ERP.Application.Interfaces.Repositories.Common;
 using ERP.Application.Models.common;
 using ERP.Application.Models.Quotation;
+using ERP.Domain.Entities.Inventory;
 using ERP.Domain.Entities.Quotation;
 using ERP.Infrastructure.Document.Documents;
 using ERP.Infrastructure.Document.Helpers;
@@ -84,6 +85,7 @@ namespace ERP.Infrastructure.Repositories
                            quotation_id = litem.quotation_id,
                            ItemId = litem.item_id,
                            Quantity = litem.quantity,
+                           units = litem.units,
                            UnitPrice = litem.unit_price,
                            VatPct = litem.tax,
                            TotalPrice = litem.line_total,
@@ -223,8 +225,117 @@ namespace ERP.Infrastructure.Repositories
                     throw new Exception("Invalid unit price.");
 
 
+                var domainid = await _context.domainmasters.Where(x => x.code == "GEN").Select(y => y.id).FirstOrDefaultAsync();
+                var categoryid = await _context.categorymasters.Where(x => x.code == "HWD").Select(y => y.id).FirstOrDefaultAsync();
+                Iteminventoryconfig itminvconfig;
+                List<Itemattributes> itmattrib = new List<Itemattributes>();
+
                 foreach (var item in quotationDto.LineItems)
                 {
+
+                    // here going to create a inventory items if the item id == 0 which means users add new item for sale without purhcase.
+
+                    if (item.ItemId == 0) // New item from freeSolo entry
+                    {
+                        var existingMasterItem = await _context.itemmasters
+                    .FirstOrDefaultAsync(x => x.part_number == item.PartNo || x.name == item.PartName);
+
+                        if (existingMasterItem != null)
+                        {
+                            item.ItemId = existingMasterItem.id; // Link to the matching established record
+                        }
+                        else
+                        {
+                            var newMasterItem = new Itemmaster
+                            {
+                                sku = await _codeGeneratorservice.GenerateSku(domainid, categoryid),
+                                name = item.PartName,
+                                description = item.PartNo,
+                                unit_id = 1,
+                                category_id = categoryid,
+                                sub_category_id = 0,
+                                domain_id = domainid,
+                                is_active = true,
+                                created_by = Convert.ToInt32(_currentuser.UserId),
+                                created_at = DateTime.UtcNow,
+                                part_number = item.PartNo,
+                                is_autocreated = true // Helpful flag property to track automated origins
+                            };
+
+                            _context.itemmasters.Add(newMasterItem);
+                            await _context.SaveChangesAsync(); // Essential to invoke here to pull back the new primary ID key
+
+                            item.ItemId = newMasterItem.id; //
+
+                            itminvconfig = await _context.iteminventoryconfigs.FirstOrDefaultAsync(x => x.item_id == item.ItemId);
+
+                            if (itminvconfig == null)
+                            {
+                                itminvconfig = new Iteminventoryconfig
+                                {
+                                    item_id = item.ItemId,
+                                    min_stock = 0,
+                                    max_stock = 0,
+                                    // default_location_id = inventoryItem.location_bin
+                                };
+                                _context.iteminventoryconfigs.Add(itminvconfig);
+                                await _context.SaveChangesAsync();
+
+                            }
+                            else
+                            {
+                                itminvconfig.min_stock = 0;
+                                itminvconfig.max_stock = 0;
+                            }
+                            await _context.SaveChangesAsync();
+
+
+                            //handle item attributes 
+
+                            itmattrib = await _context.itemattributes.Where(x => x.item_id == item.ItemId).ToListAsync();
+
+
+                            var newValues = new Dictionary<string, string>
+                                {
+                                    { "part_number", item.PartNo ?? "" },
+                                    { "tags", item.PartNo != null ? string.Join(",", item.PartNo) : "" }
+                                };
+                            var itemattadd = new List<Itemattributes>();
+
+                            foreach (var kvp in newValues)
+                            {
+                                var existing = itmattrib.FirstOrDefault(x => x.attribute_name == kvp.Key);
+                                if (existing != null)
+                                {
+                                    // 🔹 UPDATE
+                                    existing.attribute_value = kvp.Value;
+                                }
+                                else
+                                {
+                                    // 🔹 INSERT
+                                    itemattadd.Add(new Itemattributes
+                                    {
+                                        item_id = item.ItemId,
+                                        attribute_name = kvp.Key,
+                                        attribute_value = kvp.Value
+                                    });
+                                }
+                            }
+
+                            if (itemattadd.Any())
+                            {
+                                _context.itemattributes.AddRange(itemattadd);
+                            }
+                            await _context.SaveChangesAsync();
+
+                        }
+
+
+                    }
+                    //end here
+
+
+
                     var baseAmount = item.Quantity * item.UnitPrice;
                     var vat = baseAmount * item.VatPct / 100;
 
@@ -275,6 +386,7 @@ namespace ERP.Infrastructure.Repositories
                         item_id = item.ItemId,
                         description = item.PartName,
                         quantity = item.Quantity,
+                        units = item.units,
                         unit_price = item.UnitPrice,
                         tax = item.VatPct,
                         line_total = item.TotalPrice,
@@ -324,6 +436,7 @@ namespace ERP.Infrastructure.Repositories
                             //  UPDATE (A)
                             existingItem.item_id = dtoItem.ItemId;
                             existingItem.quantity = dtoItem.Quantity;
+                            existingItem.units = dtoItem.units;
                             existingItem.unit_price = dtoItem.UnitPrice;
                             existingItem.tax = dtoItem.VatPct;
 
@@ -341,6 +454,7 @@ namespace ERP.Infrastructure.Repositories
                                 description = dtoItem.PartName,
                                 item_id = dtoItem.ItemId,
                                 quantity = dtoItem.Quantity,
+                                units = dtoItem.units,
                                 unit_price = dtoItem.UnitPrice,
                                 tax = dtoItem.VatPct,
                                 line_total = (dtoItem.Quantity * dtoItem.UnitPrice)
@@ -415,49 +529,57 @@ namespace ERP.Infrastructure.Repositories
         {
             try
             {
-                var result = await ( from q in _context.quotations
-                                     join comp in _context.companies on q.company_id equals comp.id
-                                     join cust in _context.customers on q.party_id equals cust.cust_pk
-                                     
-                                     where q.id == id
-                    select new QuotationModel
-                    {
-                        companyname = comp.company_name,
-                        companyaddress = comp.address_line1 + ", " + comp.address_line2 + ", " + comp.city + " "+ comp.state,
-                        companyphone = comp.phone,
-                        companymail = comp.email,
-                        gstin = comp.gstin,
-                        quotationno = q.quotation_no,
-                        quotationdate = q.quotation_date,
-                        validity = q.validity.ToString(),
-                        customername = cust.company_name, 
-                        customeraddress = cust.address_line1 + ", " + cust.address_line2 + " " + cust.city + ", " + cust.state , 
-                        contactperson = cust.customer_name,
-                        contact = cust.mobile,
-                        subtotal = q.sub_total,
-                        total = q.total_amount,
-                        discount = q.discount_amount,
-                        gst = q.tax_amount,
-                        
-                        items = _context.quotationsLines.Where(z => z.quotation_id == q.id).Select(litem => new QuotationItems
-                        {
+                var result = await (from q in _context.quotations
+                                    join comp in _context.companies on q.company_id equals comp.id
+                                    join cust in _context.customers on q.party_id equals cust.cust_pk
+                                    join bank in _context.companybanks on q.company_id equals bank.company_id into bankGroup
+                                    from b in bankGroup.DefaultIfEmpty()
+                                    where q.id == id
+                                    select new QuotationModel
+                                    {
+                                        companyname = comp.company_name,
+                                        companyaddress = comp.address_line1 + ", " + comp.address_line2 + ", " + comp.city + " " + comp.state,
+                                        companyphone = comp.phone,
+                                        companymail = comp.email,
+                                        gstin = comp.gstin,
+                                        quotationno = q.quotation_no,
+                                        quotationdate = q.quotation_date,
+                                        validity = q.validity.ToString(),
+                                        customername = cust.company_name,
+                                        customeraddress = cust.address_line1 + ", " + cust.address_line2 + " " + cust.city + ", " + cust.state,
+                                        contactperson = cust.customer_name,
+                                        contact = cust.mobile,
+                                        subtotal = q.sub_total,
+                                        total = q.total_amount,
+                                        discount = q.discount_amount,
+                                        gst = q.tax_amount,
+                                        AccountHolderName = b != null ? b.account_name : "N/A",
+                                        BankName = b != null ? b.bank_name : "N/A",
+                                        AccountNumber = b != null ? b.account_number : "N/A",
+                                        BranchName = b != null ? b.branch_name : "N/A",
+                                        IfscCode = b != null ? b.ifsc_code : "N/A",
 
-                            partno = _context.itemattributes.Where(t => t.attribute_name == "part_number" && t.item_id == litem.item_id).Select(v => v.attribute_value).FirstOrDefault(),
-                            partname = _context.itemmasters.Where(t => t.id == litem.item_id).Select(v => v.name).FirstOrDefault(),
-                            quantity = (int)litem.quantity,
-                            unitprice = litem.unit_price,
-                            vatamt = (litem.unit_price * (int)litem.quantity) * (1 * (litem.tax / 100)),
-                            vatper = litem.tax.ToString() + "%",
-                            totalprice = litem.line_total,
 
-                        }).ToList()
-                    }
+        items = _context.quotationsLines.Where(z => z.quotation_id == q.id).Select(litem => new QuotationItems
+                                        {
+
+                                            partno = _context.itemattributes.Where(t => t.attribute_name == "part_number" && t.item_id == litem.item_id).Select(v => v.attribute_value).FirstOrDefault(),
+                                            partname = _context.itemmasters.Where(t => t.id == litem.item_id).Select(v => v.name).FirstOrDefault(),
+                                            quantity = (int)litem.quantity,
+                                            units = _context.unitmasters.Where(t => t.id == litem.units).Select(v => v.code).FirstOrDefault(),
+                                            unitprice = litem.unit_price,
+                                            vatamt = (litem.unit_price * (int)litem.quantity) * (1 * (litem.tax / 100)),
+                                            vatper = litem.tax.ToString() + "%",
+                                            totalprice = litem.line_total,
+
+                                        }).ToList()
+                                    }
                     ).FirstOrDefaultAsync();
 
 
                 var model = new TaxDocumentModel
                 {
-                    IsGstApplicable = false,
+                    IsGstApplicable = true,
                     Header = new DocumentHeaderInfo
                     {
                         Kind = DocumentKind.Quotation,
@@ -503,11 +625,11 @@ namespace ERP.Infrastructure.Repositories
 
                     Bank = new BankDetails
                     {
-                        AccountHolderName = "Anu Tech Solutions",
-                        BankName = "State Bank of India",
-                        AccountNumber = "xxxxxxxxxxxxx",
-                        BranchName = "Madurai-pudhur",
-                        IfscCode = "SBIN000XXXX"
+                        AccountHolderName = result.AccountHolderName,
+                        BankName = result.BankName,
+                        AccountNumber = result.AccountNumber,
+                        BranchName = result.BranchName,
+                        IfscCode =result.IfscCode
                     },
 
                     Notes = "60 percentage against PO"

@@ -1,6 +1,7 @@
 ﻿using ERP.Application.Interfaces.Repositories.Common;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
@@ -27,5 +28,7 @@ namespace ERP.Domain.Entities.Inventory
         public DateTime updated_at { get; set; }
         public int updated_by { get; set; }
         public long? company_id { get; set; }
+        public string? part_number { get; set; }
+        public bool is_autocreated { get; set; } = false;
     }
 }

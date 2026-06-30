@@ -21,7 +21,7 @@ namespace ERP.API.Controllers
                 var summary = await _dashboardService.GetCardSummaryAsync();
                 if (summary != null)
                 {
-                    return Ok(new { success = true, message = "Quotation Id's  Fetched Successfully", data = summary });
+                    return Ok(new { success = true, message = "Dashboard Cards  Fetched Successfully", data = summary });
                 }
                 else
                 {
