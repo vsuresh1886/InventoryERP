@@ -32,6 +32,12 @@ namespace ERP.Application.Models.Quotation
 
         public string notes { get; set; }
 
+        public string? AccountHolderName { get; set; }
+        public string? BankName { get; set; }
+        public string? AccountNumber { get; set; }
+        public string? BranchName { get; set; }
+        public string? IfscCode { get; set; }
+
 
     }
 
@@ -41,11 +47,14 @@ namespace ERP.Application.Models.Quotation
         public string partno { get; set; }
         public string partname { get; set; }
         public int quantity { get; set; }
+        public string units { get; set; }
         public decimal unitprice { get; set; }
         public decimal vatamt { get; set; }
         public string vatper { get; set; }
         public decimal totalprice { get; set; }
     }
+
+  
 
 
 

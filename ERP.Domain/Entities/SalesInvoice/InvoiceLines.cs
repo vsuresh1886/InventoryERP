@@ -19,7 +19,7 @@ namespace ERP.Domain.Entities.SalesInvoice
             public string? sku { get; set; }
             public string? description { get; set; }
             public decimal quantity { get; set; }
-            public string? units { get; set; }
+            public long? units { get; set; }
             public decimal unit_price { get; set; }
             public decimal discount { get; set; }
             public decimal tax { get; set; }

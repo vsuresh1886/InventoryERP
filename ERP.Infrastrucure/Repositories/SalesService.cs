@@ -1,16 +1,21 @@
-﻿using ERP.Application.DTOs;
+﻿using DocumentFormat.OpenXml.Office2010.CustomUI;
+using ERP.Application.DTOs;
 using ERP.Application.DTOs.Quotation;
 using ERP.Application.DTOs.SalesInvoice;
 using ERP.Application.Interfaces.Repositories;
 using ERP.Application.Interfaces.Repositories.CodeGenerator;
 using ERP.Application.Interfaces.Repositories.Common;
+using ERP.Application.Models.common;
 using ERP.Domain.Entities.Inventory;
 using ERP.Domain.Entities.Quotation;
 using ERP.Domain.Entities.SalesInvoice;
+using ERP.Infrastructure.Document.Documents;
+using ERP.Infrastructure.Document.Helpers;
 using ERP.Infrastructure.Persistence;
 using ERP.Infrastructure.Repositories;
 using Microsoft.Data.SqlClient.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -173,6 +178,7 @@ namespace ERP.Infrastructure.Repositories
                             invoice_id = litem.invoice_id,
                             ItemId = litem.item_id,
                             Quantity = litem.quantity,
+                            units = (long)litem.units,
                             UnitPrice = litem.unit_price,
                             VatPct = litem.tax,
                             TotalPrice = litem.line_total,
@@ -208,9 +214,113 @@ namespace ERP.Infrastructure.Repositories
                 if (InvDto.LineItems.Any(x => x.UnitPrice < 0))
                     throw new Exception("Invalid unit price.");
 
+                var domainid = await _context.domainmasters.Where(x => x.code == "GEN").Select(y => y.id).FirstOrDefaultAsync();
+                var categoryid = await  _context.categorymasters.Where(x => x.code == "HWD").Select(y => y.id).FirstOrDefaultAsync();
+                Iteminventoryconfig itminvconfig;
+                List<Itemattributes> itmattrib = new List<Itemattributes>();
 
                 foreach (var item in InvDto.LineItems)
                 {
+                    // here going to create a inventory items if the item id == 0 which means users add new item for sale without purhcase.
+
+                    if (item.ItemId == 0) // New item from freeSolo entry
+                    {
+                        var existingMasterItem = await _context.itemmasters
+                    .                       FirstOrDefaultAsync(x => x.part_number == item.PartNo || x.name == item.PartName);
+
+                        if (existingMasterItem != null)
+                        {
+                            item.ItemId = existingMasterItem.id; // Link to the matching established record
+                        }
+                        else
+                        {
+                            var newMasterItem = new Itemmaster
+                            {
+                                sku = await _codeGeneratorservice.GenerateSku(domainid, categoryid),
+                                name = item.PartName,
+                                description = item.PartNo,
+                                unit_id = 1,
+                                category_id = categoryid,
+                                sub_category_id = 0,
+                                domain_id = domainid,
+                                is_active = true,
+                                created_by = Convert.ToInt32(_currentuser.UserId),
+                                created_at = DateTime.UtcNow,
+                                part_number = item.PartNo,
+                                is_autocreated = true // Helpful flag property to track automated origins
+                            };
+
+                            _context.itemmasters.Add(newMasterItem);
+                            await _context.SaveChangesAsync(); // Essential to invoke here to pull back the new primary ID key
+
+                            item.ItemId = newMasterItem.id; //
+
+                            itminvconfig = await _context.iteminventoryconfigs.FirstOrDefaultAsync(x => x.item_id == item.ItemId);
+
+                            if (itminvconfig == null)
+                            {
+                                itminvconfig = new Iteminventoryconfig
+                                {
+                                    item_id = item.ItemId,
+                                    min_stock = 0,
+                                    max_stock = 0,
+                                    // default_location_id = inventoryItem.location_bin
+                                };
+                                _context.iteminventoryconfigs.Add(itminvconfig);
+                                await _context.SaveChangesAsync();
+
+                            }
+                            else
+                            {
+                                itminvconfig.min_stock = 0;
+                                itminvconfig.max_stock = 0;
+                            }
+                            await _context.SaveChangesAsync();
+
+
+                            //handle item attributes 
+
+                            itmattrib = await _context.itemattributes.Where(x => x.item_id == item.ItemId).ToListAsync();
+
+
+                            var newValues = new Dictionary<string, string>
+                                {
+                                    { "part_number", item.PartNo ?? "" },
+                                    { "tags", item.PartNo != null ? string.Join(",", item.PartNo) : "" }
+                                };
+                            var itemattadd = new List<Itemattributes>();
+
+                            foreach (var kvp in newValues)
+                            {
+                                var existing = itmattrib.FirstOrDefault(x => x.attribute_name == kvp.Key);
+                                if (existing != null)
+                                {
+                                    // 🔹 UPDATE
+                                    existing.attribute_value = kvp.Value;
+                                }
+                                else
+                                {
+                                    // 🔹 INSERT
+                                    itemattadd.Add(new Itemattributes
+                                    {
+                                        item_id = item.ItemId,
+                                        attribute_name = kvp.Key,
+                                        attribute_value = kvp.Value
+                                    });
+                                }
+                            }
+
+                            if (itemattadd.Any())
+                            {
+                                _context.itemattributes.AddRange(itemattadd);
+                            }
+                            await _context.SaveChangesAsync();
+
+                        }
+
+
+                    }
+                    //end here
                     var baseAmount = item.Quantity * item.UnitPrice;
                     var vat = baseAmount * item.VatPct / 100;
 
@@ -518,7 +628,14 @@ namespace ERP.Infrastructure.Repositories
 
             foreach (var item in groupedItems)
             {
-              
+                var masterItem = await _context.itemmasters.FindAsync(item.ItemId);
+
+                // If it's a dynamic freeSolo item, bypass stock restriction rules entirely
+                if (masterItem != null && masterItem.is_autocreated)
+                {
+                    continue; // Skip directly to the next item loop iteration smoothly!
+                }
+
 
                 var inQty = await _context.inventoryTransactions
                         .Where(t => t.item_id == item.ItemId && t.transaction_type == "IN")
@@ -563,6 +680,91 @@ namespace ERP.Infrastructure.Repositories
 
             public const int Cancel = 12;
         }
+
+
+        public async Task<byte[]> Salespdfdata_new(long id)
+        {
+            try
+            {
+                var model = await (from q in _context.invoiceHeaders
+                             join comp in _context.companies on q.company_id equals comp.id
+                             join cust in _context.customers on q.party_id equals cust.cust_pk
+                             join bank in _context.companybanks on q.company_id equals bank.company_id into bankGroup
+                            from b in bankGroup.DefaultIfEmpty()
+                             where q.id == id
+                             select new TaxDocumentModel
+                             {
+                                 IsGstApplicable = true,
+                                 Header = new DocumentHeaderInfo
+                                 {
+                                     Kind = DocumentKind.SalesInvoice,
+                                     CompanyName = comp.company_name,
+                                     CompanyAddress = comp.address_line1 + ", " + comp.address_line2 + ", " + comp.city + ", " + comp.state + ", " + comp.country,
+                                     CompanyPhone = comp.phone,
+                                     CompanyEmail = comp.email,
+                                     Gstin = comp.gstin,
+                                     DocumentNo = q.invoice_no,
+                                     DocumentDate = q.invoice_date,
+                                     ValidUntilOrDueDate = q.due_date,
+                                     PlaceOfSupply = " ",
+
+                                     PartyLabel = "Bill To",
+                                     PartyName = cust.company_name,
+                                     PartyAddress = cust.address_line1 + ", " + cust.address_line2 + ", " + cust.city + ", " + cust.city,
+                                     PartyContactPerson = cust.customer_name,
+                                     PartyContact = cust.phone,
+
+                                     SecondPartyLabel = "Ship To :" + cust.company_name,
+                                     SecondPartyAddress = cust.address_line1 + ", " + cust.address_line2 + ", " + cust.city + ", " + cust.city,
+                                 },
+
+                                 Items = _context.invoicelines.Where(x => x.invoice_id == id).Select(x => new DocumentLineItem
+                                 {
+                                     PartName = x.description,
+                                     HsnSac = x.partno,
+                                     Quantity = x.quantity,
+                                     UnitPrice = x.unit_price,
+                                     TaxableValue = x.unit_price * x.quantity,
+                                     CgstAmount = Math.Round(x.tax / 2, 2),
+                                     CgstRate = 9,
+                                     SgstAmount = Math.Round(x.tax / 2, 2),
+                                     SgstRate = 9,
+                                     TotalAmount = x.line_total
+                                 }).ToList(),
+
+                                 Summary = new DocumentSummary
+                                 {
+                                     SubTotal = q.sub_total,
+                                     TotalTax = q.tax_amount,
+                                     GrandTotal = q.total_amount,
+                                     AmountInWords = AmountToWordsConverter.Convert(q.total_amount, "INR")
+                                 },
+
+                                 Bank = new BankDetails
+                                 {
+                                     AccountHolderName = b != null ? b.account_name : "N/A",
+                                     BankName = b != null ? b.bank_name : "N/A",
+                                     AccountNumber = b != null ? b.account_number : "N/A",
+                                     BranchName = b != null ? b.branch_name : "N/A",
+                                     IfscCode = b != null ? b.ifsc_code : "N/A"
+                                 },
+                                 Notes = ""
+
+                             }).FirstOrDefaultAsync();
+
+                var document = new QuotationDocument(model);
+                byte[] pdfprint = document.GeneratePdf();
+                return pdfprint;
+
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Fetch quotation by id  error: " + ex.Message);
+                throw ex;
+            }
+        }
+
 
     }
 }

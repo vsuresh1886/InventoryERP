@@ -49,6 +49,7 @@ namespace ERP.Application.DTOs.SalesInvoice
         public string? PartNo { get; set; }
         public string? Sku { get; set; }
         public string? PartName { get; set; }
+        public long units { get; set; }
 
         public decimal Quantity { get; set; }
 

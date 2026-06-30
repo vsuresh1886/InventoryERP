@@ -16,6 +16,7 @@ namespace ERP.Domain.Entities.Quotation
         public long item_id { get; set; }
         public string? description { get; set; }
         public decimal quantity { get; set; }
+        public long units { get; set; }
         public decimal unit_price { get; set; }
         public decimal discount { get; set; }
         public decimal tax { get; set; }

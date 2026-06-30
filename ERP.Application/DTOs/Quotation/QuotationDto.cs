@@ -45,8 +45,8 @@ namespace ERP.Application.DTOs.Quotation
         public string? PartNo { get; set; }
         public string? Sku { get; set; }
         public string? PartName { get; set; }
-
         public decimal Quantity { get; set; }
+        public long units { get; set; }
 
         public decimal UnitPrice { get; set; }
 
